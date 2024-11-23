@@ -50,3 +50,15 @@
 `define B_ins     7'b1100011   //包括Beq,Bne,Blt,Bge,Bltu,Bgeu
 `define S_ins     7'b0100011   //包括Sb,Sh,Sw
 `define R_ins     7'b0110011   //包括Sub,Add,Sll,Slt,Sltu,Xor,Sra,Srl,Or,And
+
+//ROB
+`define ROB_addr 5
+`define ROB_size 1<<`ROB_addr
+
+//RS
+`define RS_addr 5
+`define RS_size 1<<`RS_addr
+
+//
+`define LSB_addr 5
+`define LSB_size 1<<`LSB_addr
