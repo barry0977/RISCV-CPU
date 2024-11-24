@@ -6,28 +6,28 @@ module ReorderBuffer(
     input wire rdy_in,
 
     //RS执行完成的结果
-    input wire [`ROB_addr-1:0] RS_ROBindex,
+    input wire [`RoB_addr-1:0] RS_RoBindex,
     input wire [31:0] RS_value,
 
     //LSB执行完成的结果
-    input wire [`ROB_addr-1:0] LSB_ROBindex,
+    input wire [`RoB_addr-1:0] LSB_RoBindex,
     input wire [31:0] LSB_value,
 
     //提交时
     
     //是否已满
-    output wire ROB_full
+    output wire RoB_full
 );
 
-reg [`ROB_addr-1:0]  index[`ROB_size-1:0];
-reg                 ready[`ROB_size-1:0];
-reg [4:0]           dest[`ROB_size-1:0];//对应的目标寄存器
-reg [31:0]          value[`ROB_size-1:0];//计算出来的值
-reg [`ROB_addr-1:0] head,tail;
+reg [`RoB_addr-1:0]  index[`RoB_size=1:0];
+reg                 ready[`RoB_size-1:0];
+reg [4:0]           dest[`RoB_size-1:0];//对应的目标寄存器
+reg [31:0]          value[`RoB_size-1:0];//计算出来的值
+reg [`RoB_addr-1:0] head,tail;
 
 always @(posedge clk_in) begin
     if(rst_in)begin
-        //清除ROB
+        //清除RoB
     end
     else if(rdy_in)begin
     end

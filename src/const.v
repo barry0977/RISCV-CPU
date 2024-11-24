@@ -52,8 +52,8 @@
 `define R_ins     7'b0110011   //包括Sub,Add,Sll,Slt,Sltu,Xor,Sra,Srl,Or,And
 
 //ROB
-`define ROB_addr 5
-`define ROB_size 1<<`ROB_addr
+`define RoB_addr 5
+`define RoB_size 1<<`RoB_addr
 
 //RS
 `define RS_addr 5
