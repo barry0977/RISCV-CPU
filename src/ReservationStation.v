@@ -6,7 +6,11 @@ module ReservationStation(
 
     //执行完成后发送给RoB
     output wire [`RoB_addr-1:0] RS_RoBindex,
-    output wire [31:0] RS_value
+    output wire [31:0] RS_value,
+
+    //接收CDB广播
+    input wire [31:0] cdb_value,
+    input wire [`RoB_addr-1:0] cdb_RoBindex,
 );
 
 reg                 busy[`RS_size-1:0];

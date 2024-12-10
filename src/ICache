@@ -1,0 +1,7 @@
+module ICache(
+    input wire clk,
+    input wire rst,
+    input wire rdy,
+
+    //与InsFetcher交互
+)

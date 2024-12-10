@@ -11,7 +11,12 @@ module RegisterFile(
     output wire [31:0] vj,
     output wire [31:0] vk,
     output wire [`RoB_addr-1:0] qj,
-    output wire [`RoB_addr-1:0] qk
+    output wire [`RoB_addr-1:0] qk,
+
+    //CDB广播更新
+    input [4:0] cdb_regid,
+    input [31:0] cdb_value,
+    input [`RoB_addr-1:0] cdb_RoBindex
 );
 
 reg [31:0]          data[31:0];//储存的数据
