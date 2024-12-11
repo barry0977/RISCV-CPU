@@ -55,6 +55,7 @@ always @(posedge clk_in) begin
         end
     end
     else if(rdy_in)begin
+        //加入RoB末尾
         if(inst_valid)begin
             tail <= (tail + 1) % `RoB_size;
             busy[tail] <= 1;
@@ -62,6 +63,7 @@ always @(posedge clk_in) begin
             dest[tail] <= inst_rd;
             value[tail] <= inst_value;
         end
+        //如果头部ready，则发射
         if(busy[head]&&ready[head])begin
             head <= (head + 1) % `RoB_size;
             busy[head] <= 0;
