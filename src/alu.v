@@ -85,7 +85,7 @@ always @(*)begin
             result = rs1 >> rs2[4:0];
         end
         `Srai:begin
-            result = $signed(rs1) >> rs2[4:0];
+            result = $signed(rs1) >>> rs2[4:0];
         end
         `Add:begin
             result = rs1 + rs2;
@@ -112,7 +112,7 @@ always @(*)begin
             result = rs1 >> rs2;
         end
         `Sra:begin
-            result = $signed(rs1) >> rs2;
+            result = $signed(rs1) >>> rs2;
         end
         `Sub:begin
             result = rs1 - rs2;

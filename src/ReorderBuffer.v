@@ -45,6 +45,14 @@ assign empty = front == rear;
 always @(posedge clk_in) begin
     if(rst_in)begin
         //清除RoB
+        head <= 0;
+        rear <= 0;
+        for(int i = 0; i < `RoB_size; i++)begin
+            ready[i] <= 0;
+            busy[i] <= 0;
+            value[i] <= 0;
+            dest[i] <= 0;
+        end
     end
     else if(rdy_in)begin
         if(inst_valid)begin
