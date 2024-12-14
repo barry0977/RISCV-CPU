@@ -16,7 +16,7 @@ module RegisterFile(
     output wire [`RoB_addr-1:0] get_rely2,
 
     //是否需要清空
-    input wire  flush,
+    input wire  rf_clear,
 
     //RoB发射时，更新依赖关系
     input wire [4:0] index,
@@ -32,24 +32,25 @@ reg [31:0]          data[31:0];//储存的数据
 reg [`RoB_addr-1:0] rely[31:0];//最新值将由哪条指令算出
 reg                 busy[31:0];//是否有依赖
 
-assign has_rely1 = busy[rs1_id] || (index && (index == rs1_id));
-assign has_rely2 = busy[rs2_id] || (index && (index == rs2_id)); 
+assign has_rely1 = busy[rs1_id] || ((index != 0) && (index == rs1_id));
+assign has_rely2 = busy[rs2_id] || ((index != 0) && (index == rs2_id)); 
 assign val1 = data[rs1_id];
 assign val2 = data[rs2_id];
-assign get_rely1 = (index && (index == rs1_id)) ? new_dep : rely[rs1_id];
-assign get_rely2 = (index && (index == rs2_id)) ? new_dep : rely[rs2_id];
+assign get_rely1 = ((index != 0) && (index == rs1_id)) ? new_dep : rely[rs1_id];
+assign get_rely2 = ((index != 0) && (index == rs2_id)) ? new_dep : rely[rs2_id];
 
+integer i;
 always @(posedge clk_in)begin
     if(rst_in)begin
-        for(int i = 0; i < 32; i++)begin 
+        for(i = 0; i < 32; i = i + 1)begin 
             data[i] <= 0;
             rely[i] <= 0;
             busy[i] <= 0;
         end
     end
     else if(rdy_in)begin
-        if(flush)begin//分支预测错误，清空依赖关系
-            for(int i = 0; i < 32; i++)begin 
+        if(rf_clear)begin//分支预测错误，清空依赖关系
+            for(i = 0; i < 32; i = i + 1)begin 
                 rely[i] <= 0;
                 busy[i] <= 0;
             end

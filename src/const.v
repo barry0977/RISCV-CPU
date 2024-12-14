@@ -53,12 +53,12 @@
 
 //ROB
 `define RoB_addr 5
-`define RoB_size 1<<`RoB_addr
+`define RoB_size 32
 
 //RS
-`define RS_addr 5
-`define RS_size 1<<`RS_addr
+`define RS_addr 3
+`define RS_size 8
 
 //
-`define LSB_addr 5
-`define LSB_size 1<<`LSB_addr
+`define LSB_addr 3
+`define LSB_size 8
