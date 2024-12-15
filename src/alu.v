@@ -1,16 +1,20 @@
 `include "const.v"
 
 module ALU(
-    input wire[31:0] rs1,
-    input wire[31:0] rs2,
-    input wire[5:0] op,
+    input wire [31:0] rs1,
+    input wire [31:0] rs2,
+    input wire [5:0] op,
+    input wire [`RoB_addr-1:0] robid,
 
+    //将结果广播给所有元件
     output reg [31:0] result,
-    output reg        valid
+    output reg [`RoB_addr-1:0] alu_robid,
+    output reg valid
 );
 
 always @(*)begin
     result = 0;
+    alu_robid = robid;
     if(op > 0)begin
         valid = 1;
     end else begin 

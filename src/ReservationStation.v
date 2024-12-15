@@ -9,6 +9,7 @@ module ReservationStation(
 
     //Decoder发射
     input wire  inst_valid,
+    input wire [5:0] inst_op,
     input wire [`RoB_addr-1:0] RoB_index,
     input wire [31:0] inst_val1,
     input wire [31:0] inst_val2,
@@ -79,9 +80,39 @@ always @(posedge clk_in)begin
     end
     else if(rdy_in)begin
         //加入RS
-        if(inst_valid)begin
+        if(inst_valid && (first_empty != 8))begin
             busy[first_empty] <= 1;
-            
+            RoBindex[first_empty] <= RoB_index;
+            op[first_empty] <= inst_op;
+            vj[first_empty] <= inst_val1;
+            vk[first_empty] <= inst_val2;
+            is_qj[first_empty] <= inst_has_rely1;
+            is_qk[first_empty] <= inst_has_rely2;
+            qj[first_empty] <= rely1;
+            qk[first_empty] <= rely2;
+        end
+        //可以执行，交给ALU
+        if(first_exe != 8)begin
+            alu_rs1 <= vj[first_exe];
+            alu_rs2 <= vk[first_exe];
+            alu_op <= op[first_exe];
+        end else begin
+            alu_rs1 <= 0;
+            alu_rs2 <= 0;
+            alu_op <= 0;
+        end
+        //更新依赖
+        for(i = 0; i < `RS_size; i = i + 1)begin
+            if(busy[i])begin
+                if(is_qj[i] && (qj[i] == cdb_RoBindex))begin
+                    is_qj[i] <= 0;
+                    vj[i] <= cdb_value;
+                end
+                if(is_qk[i] && (qk[i] == cdb_RoBindex))begin
+                    is_qk[i] <= 0;
+                    vk[i] <= cdb_value; 
+                end
+            end
         end
     end
 end

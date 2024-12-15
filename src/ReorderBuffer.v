@@ -14,32 +14,40 @@ module ReorderBuffer(
     input wire [31:0] inst_pc,
 
     //RS执行完成的结果
-    input wire [`RoB_addr-1:0] RS_RoBindex,
-    input wire [31:0] RS_value,
+    input wire rs_ready,
+    input wire [`RoB_addr-1:0] rs_RoBindex,
+    input wire [31:0] rs_value,
 
     //LSB执行完成的结果
-    input wire [`RoB_addr-1:0] LSB_RoBindex,
-    input wire [31:0] LSB_value,
+    input wire lsb_ready,
+    input wire [`RoB_addr-1:0] lsb_RoBindex,
+    input wire [31:0] lsb_value,
+
+    //给RF更新
+    
 
     //提交时,通过CDB广播给所有元件
     output wire [31:0] cdb_value,
     output wire [`RoB_addr-1:0] cdb_RoBindex,
     output wire [4:0] cdb_regid,
 
-
     //是否已满
-    output wire RoB_full
+    output wire RoB_full,
+
+    //分支预测错误，发出clear信号
+    output reg clear
 );
 
-reg [`RoB_addr-1:0] index[`RoB_size=1:0];
 reg                 ready[`RoB_size-1:0];
+reg [2:0]           RoBtype[`RoB_size-1:0];
 reg                 busy[`RoB_size-1:0];
 reg [4:0]           dest[`RoB_size-1:0];//对应的目标寄存器
 reg [31:0]          value[`RoB_size-1:0];//计算出来的值
-reg [`RoB_addr-1:0] front,rear;
+reg []
+reg [`RoB_addr-1:0] head,tail;
 
 wire empty,full;
-assign full = (rear+1)
+assign full = (rear + 1) % `RoB_size == front;
 assign empty = front == rear;
 
 always @(posedge clk_in) begin
@@ -63,12 +71,12 @@ always @(posedge clk_in) begin
             dest[tail] <= inst_rd;
             value[tail] <= inst_value;
         end
-        //如果头部ready，则发射
+        //如果头部ready，则commit
         if(busy[head]&&ready[head])begin
             head <= (head + 1) % `RoB_size;
             busy[head] <= 0;
             ready[head] <= 0;
-
+            case
         end
     end
 end
