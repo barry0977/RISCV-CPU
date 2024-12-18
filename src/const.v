@@ -59,6 +59,10 @@
 `define RS_addr 3
 `define RS_size 8
 
-//
+//LSB
 `define LSB_addr 3
 `define LSB_size 8
+
+//ICache
+`define Cache_addr 3
+`define Cache_size 8

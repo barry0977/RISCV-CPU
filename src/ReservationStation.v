@@ -5,34 +5,36 @@ module ReservationStation(
     input wire rdy_in,
 
     //是否已满
-    output wire full,
+    output wire rs_full,
 
     //Decoder发射
-    input wire  inst_valid,
+    input wire inst_valid,
     input wire [5:0] inst_op,
     input wire [`RoB_addr-1:0] RoB_index,
     input wire [31:0] inst_val1,
     input wire [31:0] inst_val2,
     input wire inst_has_rely1,
     input wire inst_has_rely2,
-    input wire [`RoB_addr-1:0] rely1,
-    input wire [`RoB_addr-1:0] rely2,
+    input wire [`RoB_addr-1:0] inst_rely1,
+    input wire [`RoB_addr-1:0] inst_rely2,
 
     //是否清空RS
     input wire RS_clear,
 
-    //发送给ALU执行
+    //发送给ALU运算
     output reg [31:0] alu_rs1,
     output reg [31:0] alu_rs2,
     output reg [5:0]  alu_op,
+    output reg [`RoB_addr-1:0] alu_id, 
+    //ALU结果更新
+    input wire alu_valid,
+    input wire [`RoB_addr-1:0] alu_robid,
+    input wire [31:0] alu_val,
 
-    //执行完成后发送给RoB
-    output wire [`RoB_addr-1:0] RS_RoBindex,
-    output wire [31:0] RS_value,
-
-    //接收CDB广播
-    input wire [31:0] cdb_value,
-    input wire [`RoB_addr-1:0] cdb_RoBindex
+    //LSB结果更新
+    input wire lsb_valid,
+    input wire [`RoB_addr-1:0] lsb_robid,
+    input wire [31:0] lsb_val
 );
 
 reg                 busy[`RS_size:0];
@@ -49,6 +51,8 @@ reg [31:0]          result[`RS_size-1:0];
 wire ready[`RS_size-1:0];
 wire [`RS_addr:0] first_empty;
 wire [`RS_addr:0] first_exe;
+wire new_has_rely1,new_has_rely2;
+wire [31:0] new_val1,new_val2;
 
 //是否可以执行
 generate
@@ -62,11 +66,21 @@ endgenerate
 assign first_empty = busy[0] == 0 ? 0 : busy[1] == 0 ? 1 : busy[2] == 0 ? 2 : busy[3] == 0 ? 3 : busy[4] == 0 ? 4 : busy[5] == 0 ? 5 : busy[6] == 0 ? 6 : busy[7] == 0 ? 7 : 8;
 assign first_exe = ready[0] == 0 ? 0 : ready[1] == 0 ? 1 : ready[2] == 0 ? 2 : ready[3] == 0 ? 3 : ready[4] == 0 ? 4 : ready[5] == 0 ? 5 : ready[6] == 0 ? 6 : ready[7] == 0 ? 7 : 8;
 
-assign full = first_empty == 8;
+assign rs_full = first_empty == 8;
+
+//判断同一周期新更新是否会更新依赖
+assign new_has_rely1 = inst_has_rely1 && !(alu_valid && (alu_robid == inst_rely1)) && !(lsb_valid && (lsb_robid == inst_rely1));
+assign new_has_rely2 = inst_has_rely2 && !(alu_valid && (alu_robid == inst_rely2)) && !(lsb_valid && (lsb_robid == inst_rely2));
+assign new_val1 = !inst_has_rely1 ? inst_val1 : (alu_valid && (alu_robid == inst_rely1)) ? alu_val : (lsb_valid && (lsb_robid == inst_rely1)) ? lsb_val : 0;
+assign new_val2 = !inst_has_rely2 ? inst_val2 : (alu_valid && (alu_robid == inst_rely2)) ? alu_val : (lsb_valid && (lsb_robid == inst_rely2)) ? lsb_val : 0;
 
 always @(posedge clk_in)begin
     integer i;
     if(rst_in||RS_clear) begin
+        alu_op <= 0;
+        alu_rs1 <= 0;
+        alu_rs2 <= 0;
+        alu_id <= 0;
         for(i = 0; i < `RS_size; i = i + 1)begin
             busy[i] <= 0;
             RoBindex[i] <= 0;
@@ -80,37 +94,52 @@ always @(posedge clk_in)begin
     end
     else if(rdy_in)begin
         //加入RS
-        if(inst_valid && (first_empty != 8))begin
+        if(inst_valid && (first_empty < `RS_size))begin
             busy[first_empty] <= 1;
             RoBindex[first_empty] <= RoB_index;
             op[first_empty] <= inst_op;
-            vj[first_empty] <= inst_val1;
-            vk[first_empty] <= inst_val2;
-            is_qj[first_empty] <= inst_has_rely1;
-            is_qk[first_empty] <= inst_has_rely2;
-            qj[first_empty] <= rely1;
-            qk[first_empty] <= rely2;
+            vj[first_empty] <= new_val1;
+            vk[first_empty] <= new_val2;
+            is_qj[first_empty] <= new_has_rely1;
+            is_qk[first_empty] <= new_has_rely2;
+            qj[first_empty] <= inst_rely1;
+            qk[first_empty] <= inst_rely2;
         end
         //可以执行，交给ALU
-        if(first_exe != 8)begin
+        if(first_exe < `RS_size)begin
             alu_rs1 <= vj[first_exe];
             alu_rs2 <= vk[first_exe];
             alu_op <= op[first_exe];
+            alu_id <= RoBindex[first_exe];
+            busy[first_exe] <= 0;
         end else begin
             alu_rs1 <= 0;
             alu_rs2 <= 0;
             alu_op <= 0;
+            alu_id <= 0;
         end
         //更新依赖
-        for(i = 0; i < `RS_size; i = i + 1)begin
+        for(i = 0; i < `LSB_size; i = i + 1)begin
             if(busy[i])begin
-                if(is_qj[i] && (qj[i] == cdb_RoBindex))begin
-                    is_qj[i] <= 0;
-                    vj[i] <= cdb_value;
+                if(alu_valid)begin
+                    if(is_qj[i] && (alu_robid == qj[i]))begin
+                        is_qj[i] <= 0;
+                        vj[i] <= alu_val;
+                    end
+                    if(is_qk[i] && (alu_robid == qk[i]))begin
+                        is_qk[i] <= 0;
+                        vk[i] <= alu_val;
+                    end
                 end
-                if(is_qk[i] && (qk[i] == cdb_RoBindex))begin
-                    is_qk[i] <= 0;
-                    vk[i] <= cdb_value; 
+                if(lsb_valid)begin
+                    if(is_qj[i] && (lsb_robid == qj[i]))begin
+                        is_qj[i] <= 0;
+                        vj[i] <= lsb_val;
+                    end
+                    if(is_qk[i] && (lsb_robid == qk[i]))begin
+                        is_qk[i] <= 0;
+                        vk[i] <= lsb_val;
+                    end
                 end
             end
         end

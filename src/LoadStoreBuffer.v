@@ -172,7 +172,7 @@ always @(posedge clk_in)begin
                         is_qj[i] <= 0;
                         vj[i] <= alu_val;
                     end
-                    if(is_qj[i] && (alu_robid == qj[i]))begin
+                    if(is_qk[i] && (alu_robid == qk[i]))begin
                         is_qk[i] <= 0;
                         vk[i] <= alu_val;
                     end
@@ -182,7 +182,7 @@ always @(posedge clk_in)begin
                         is_qj[i] <= 0;
                         vj[i] <= lsb_val;
                     end
-                    if(is_qj[i] && (lsb_robid == qj[i]))begin
+                    if(is_qk[i] && (lsb_robid == qk[i]))begin
                         is_qk[i] <= 0;
                         vk[i] <= lsb_val;
                     end

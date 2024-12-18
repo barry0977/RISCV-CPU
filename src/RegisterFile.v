@@ -18,11 +18,13 @@ module RegisterFile(
     //是否需要清空
     input wire  rf_clear,
 
-    //RoB发射时，更新依赖关系
+    //RoB issue时，更新依赖关系
+    input wire issue_valid,
     input wire [4:0] index,
     input wire [`RoB_addr-1:0] new_dep,
 
     //ROB commit时，CDB广播更新
+    input wire commit_valid,
     input [4:0] cdb_regid,
     input [31:0] cdb_value,
     input [`RoB_addr-1:0] cdb_RoBindex
@@ -54,12 +56,13 @@ always @(posedge clk_in)begin
                 rely[i] <= 0;
                 busy[i] <= 0;
             end
-        end else begin
-            if(index != 0)begin//添加依赖
+        end 
+        else begin
+            if(issue_valid && index != 0)begin//添加依赖
                 busy[index] <= 1;
                 rely[index] <= new_dep;
             end
-            if(cdb_regid != 0)begin//更新数据和依赖
+            if(commit_valid && cdb_regid != 0)begin//更新数据和依赖
                 data[cdb_regid] <= cdb_value;
                 if((rely[cdb_regid] == cdb_RoBindex)&&(index != cdb_regid))begin
                     busy[cdb_regid] <= 0;

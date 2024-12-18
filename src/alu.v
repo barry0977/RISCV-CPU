@@ -9,16 +9,16 @@ module ALU(
     //将结果广播给所有元件
     output reg [31:0] result,
     output reg [`RoB_addr-1:0] alu_robid,
-    output reg valid
+    output reg alu_valid
 );
 
 always @(*)begin
     result = 0;
     alu_robid = robid;
     if(op > 0)begin
-        valid = 1;
+        alu_valid = 1;
     end else begin 
-        valid = 0;
+        alu_valid = 0;
     end
     case(op)
         `Lui:begin

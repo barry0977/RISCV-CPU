@@ -9,15 +9,14 @@ module decoder(
     input  wire [31:0] pc,
 
     //向RF获取寄存器依赖关系
+    output wire rf_rs1,
+    output wire rf_rs2,
     input  wire rf_val1,
     input  wire rf_val2,
     input  wire rf_has_rely1,
     input  wire rf_has_rely2,
     input  wire rf_rely1,
     input  wire rf_rely2,
-
-    output wire rf_rs1,
-    output wire rf_rs2,
 
     //给RoB
     input  wire rob_full,
@@ -29,20 +28,20 @@ module decoder(
     output reg [4:0] rob_rd,
     output reg [31:0] rob_inst_pc,
 
-    //给RS
+    //给RS/LSB
     input  wire rs_full,
     output reg  rs_inst_valid,
-    output reg [5:0] rs_inst_op,
-    output reg [`RoB_addr-1:0] rs_RoB_index,
-    output reg [31:0] rs_inst_val1,
-    output reg [31:0] rs_inst_val2,
+    input  wire lsb_full,
+    output reg  lsb_inst_valid,
+    output reg [5:0] inst_op,
+    output reg [`RoB_addr-1:0] RoB_index,
+    output reg [31:0] inst_val1,
+    output reg [31:0] inst_val2,
     output reg inst_has_rely1,
     output reg inst_has_rely2,
     output reg [`RoB_addr-1:0] rely1,
     output reg [`RoB_addr-1:0] rely2,
-
-    //给LSB
-    input  wire lsb_full
+    output reg [31:0] inst_imm
 );
 
 wire [4:0] rd = instr[11:7];
@@ -56,6 +55,7 @@ wire [31:0] imm_J = {{12{instr[31]}},instr[19:12],instr[20],instr[30:21],1'b0};
 wire [31:0] imm_I = {{20{instr[31]}},instr[31:20]};
 wire [31:0] imm_B = {{20{instr[31]}},instr[7],instr[30:25],instr[11:8],1'b0};
 wire [31:0] imm_S = {{20{instr[31]}},instr[31:25],instr[11:7]};
+
 
 // always @(posedge clk_in)begin
 //     case(optype)
