@@ -22,7 +22,7 @@ module RegisterFile(
     input wire [4:0] index,
     input wire [`RoB_addr-1:0] new_dep,
 
-    //CDB广播更新
+    //ROB commit时，CDB广播更新
     input [4:0] cdb_regid,
     input [31:0] cdb_value,
     input [`RoB_addr-1:0] cdb_RoBindex
