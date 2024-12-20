@@ -131,15 +131,27 @@ always @(posedge clk_in)begin
         case(state)
         0:begin
             lsb_valid <= 0;
-            if(!empty && is_qj[head] == 0 && is_qk[head] == 0 && rob_valid && rob_head_id == RoBindex[head])begin
-                head <= head + 1;
-                request <= 1;
-                load_or_store <= (op[head] >= `Lb && op[head] <= `Lhu) ? 0 : 1;
-                mem_op <= op[head];
-                mem_addr <= vj[head] + imm[head];
-                mem_data <= vk[head];
-                lsb_robid <= rob_head_id;
-                state <= (op[head] >= `Lb && op[head] <= `Lhu) ? 1 : 2;
+            if(!empty && is_qj[head] == 0 && is_qk[head] == 0)begin
+                if(op[head] >= `Lb && op[head] <= `Lhu)begin //load可以直接执行
+                    head <= head + 1;
+                    request <= 1;
+                    load_or_store <= 0;
+                    mem_op <= op[head];
+                    mem_addr <= vj[head] + imm[head];
+                    mem_data <= 0;
+                    lsb_robid <= rob_head_id;
+                    state <= 1;
+                end
+                else if(rob_valid && rob_head_id == RoBindex[head])begin //store要等到rob头部也是该指令才执行
+                    head <= head + 1;
+                    request <= 1;
+                    load_or_store <= 1;
+                    mem_op <= op[head];
+                    mem_addr <= vj[head] + imm[head];
+                    mem_data <= vk[head];
+                    lsb_robid <= rob_head_id;
+                    state <= 2;
+                end
             end
         end
         1:begin //load

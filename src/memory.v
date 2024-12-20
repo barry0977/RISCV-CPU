@@ -78,7 +78,7 @@ always @(posedge clk_in)begin
                         cur_size <= 0;
                         state <= 2;
                         mem_dout <= 0;
-                        mem_a <= lsb_mem_addr;
+                        mem_a <= 0;
                         mem_wr <= 0;
                     end
                 end
@@ -168,7 +168,7 @@ always @(posedge clk_in)begin
                 end
                 else begin
                     cur_size <= cur_size + 1;
-                    mem_a <= cur_size == 0 ? mem_a : mem_a + 1;//cur_size=0时传入第一个值，地址先不加1
+                    mem_a <= cur_size == 0 ? lsb_mem_addr : mem_a + 1;//cur_size=0时传入第一个值，地址先不加1
                 end
             end
             3:begin //fetch

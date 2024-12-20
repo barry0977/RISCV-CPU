@@ -5,6 +5,8 @@ module decoder(
     input wire rst_in,
     input wire rdy_in,
 
+    //从InsFetch获取指令
+    input  wire if_valid,
     input  wire [31:0] instr,
     input  wire [31:0] pc,
 

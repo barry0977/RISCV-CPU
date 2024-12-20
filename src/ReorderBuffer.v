@@ -18,6 +18,7 @@ module ReorderBuffer(
     input wire [4:0] inst_rd,
     input wire [31:0] inst_value,
     input wire [31:0] inst_pc,
+    input wire inst_isjump,
 
     //ALU执行完成的结果
     input wire alu_valid,
@@ -45,7 +46,12 @@ module ReorderBuffer(
 
     //分支预测错误，发出clear信号
     output reg clear,
-    output reg [31:0] new_pc
+    output reg [31:0] new_pc,//告诉IF新的PC值
+
+    //与Predictor交互
+    output reg rob_valid,
+    output reg [31:0] now_pc,
+    output reg should_jump
 );
 
 reg                 ready[`RoB_size-1:0];
@@ -98,6 +104,7 @@ always @(posedge clk_in) begin
             dest[tail] <= inst_rd;
             value[tail] <= inst_value;
             pc[i] <= inst_pc;
+            isjump[i] <= inst_isjump;
             rf_issue <= 1;
             rf_issue_rd <= inst_rd;
             rf_new_dep <= tail;
@@ -137,8 +144,11 @@ always @(posedge clk_in) begin
                 `else_:begin
                 end
                 `branch_:begin
+                    rob_valid <= 1;
+                    now_pc <= pc[head];
                     //不需要跳转
                     if(value[head] == 0)begin
+                        should_jump <= 0;
                         if(isjump[head])begin //预测需要跳转
                             clear <= 1;
                             new_pc <= pc[head] + 4;
@@ -148,6 +158,7 @@ always @(posedge clk_in) begin
                     end
                     //需要跳转
                     else begin
+                        should_jump <= 1;
                         if(isjump[head])begin //预测需要跳转
                         end
                         else begin //预测不需要跳转
@@ -163,6 +174,11 @@ always @(posedge clk_in) begin
             rf_commit_rd <= 0;
             rf_robid <= 0;
             rf_value <= 0;
+            clear <= 0;
+            new_pc <= 0;
+            rob_valid <= 0;
+            now_pc <= 0;
+            should_jump <= 0;
         end
     end
 end

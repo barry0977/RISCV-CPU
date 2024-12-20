@@ -17,14 +17,17 @@ module Icache(
     output reg [31:0] hit_inst
 );
 
+//地址有效位为[17:0]
 //[1:0]无意义，[`Cache_addr+1:2]作为index,其余位作为tag
 reg                    valid[`Cache_size-1:0];
 reg [31:0]             data[`Cache_size-1:0];
-reg [31:`Cache_addr+2] tag[`Cache_size-1:0];
+reg [17:`Cache_addr+2] tag[`Cache_size-1:0];
 
 reg state;//记录当前是否在从memory取指令
 wire exist;//是否存在cache中或正好从memory取出
-assign exist = tag[fetch_pc[`Cache_addr+1:2]] == fetch_pc[31:`Cache_addr+2];
+wire [`Cache_addr+1:2] index;
+assign index = fetch_pc[`Cache_addr+1:2];
+assign exist = valid[index] && tag[index] == fetch_pc[17:`Cache_addr+2];
 
 integer i;
 always @(posedge clk_in)begin
@@ -44,6 +47,9 @@ always @(posedge clk_in)begin
                     state <= 0;
                     mem_ask <= 0;
                     mem_addr <= 0;
+                    valid[index] <= 1;
+                    data[index] <= mem_inst;
+                    tag[index] = fetch_pc[17:`Cache_addr+2];
                 end
                 else begin
                     hit <= 0;
