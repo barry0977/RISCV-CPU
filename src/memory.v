@@ -143,32 +143,37 @@ always @(posedge clk_in)begin
                 end
             end
             2:begin //store
-                mem_wr <= 1;
-                if(cur_size == 0)begin //要在前一个周期先把要写的内容发给Mem,因此是从cur_size=0开始
-                    mem_dout <= lsb_mem_data[7:0];
-                end
-                else if(cur_size == 1)begin
-                    mem_dout <= lsb_mem_data[15:8];
-                end
-                else if(cur_size == 2)begin
-                    mem_dout <= lsb_mem_data[23:16];
-                end
-                else if(cur_size == 3)begin
-                    mem_dout <= lsb_mem_data[31:24];
-                end
+                if(lsb_mem_addr != 196608 && lsb_mem_addr != 196612)begin
+                    mem_wr <= 1;
+                    if(cur_size == 0)begin //要在前一个周期先把要写的内容发给Mem,因此是从cur_size=0开始
+                        mem_dout <= lsb_mem_data[7:0];
+                    end
+                    else if(cur_size == 1)begin
+                        mem_dout <= lsb_mem_data[15:8];
+                    end
+                    else if(cur_size == 2)begin
+                        mem_dout <= lsb_mem_data[23:16];
+                    end
+                    else if(cur_size == 3)begin
+                        mem_dout <= lsb_mem_data[31:24];
+                    end
 
-                if(cur_size == total_size)begin //cur_size = 4时,正好写完
-                    lsb_mem_valid <= 1;
-                    state <= 4;
-                    total_size <= 0;
-                    cur_size <= 0;
-                    mem_dout <= 0;
-                    mem_a <= 0;
-                    mem_wr <= 0;
+                    if(cur_size == total_size)begin //cur_size = 4时,正好写完
+                        lsb_mem_valid <= 1;
+                        state <= 4;
+                        total_size <= 0;
+                        cur_size <= 0;
+                        mem_dout <= 0;
+                        mem_a <= 0;
+                        mem_wr <= 0;
+                    end
+                    else begin
+                        cur_size <= cur_size + 1;
+                        mem_a <= cur_size == 0 ? lsb_mem_addr : mem_a + 1;//cur_size=0时传入第一个值，地址先不加1
+                    end
                 end
                 else begin
-                    cur_size <= cur_size + 1;
-                    mem_a <= cur_size == 0 ? lsb_mem_addr : mem_a + 1;//cur_size=0时传入第一个值，地址先不加1
+                    state <= 0;
                 end
             end
             3:begin //fetch

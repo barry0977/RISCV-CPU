@@ -36,6 +36,7 @@ module decoder(
     input  wire [`RoB_addr-1:0] rob_index,//加入后在RoB中的序号
     output reg  rob_inst_valid,
     output reg  rob_inst_ready,
+    output reg [5:0] rob_inst_op,
     output reg [2:0] rob_type,
     output reg [31:0] rob_value,
     output reg [4:0] rob_rd,
@@ -112,7 +113,7 @@ assign opcode = optype == `Lui_ins ? `Lui :
                                     funct3 == 3'b100 ? `Xor :
                                     funct3 == 3'b101 ? (funct7[5] ? `Sra : `Srl) :
                                     funct3 == 3'b110 ? `Or :
-                                    funct3 == 3'b111 ? `And : 0) : 0;
+                                    funct3 == 3'b111 ? `And : 0) : `Exit;
 assign robtype = (opcode >= `Lui && opcode <= `Jalr) ? `else_ : opcode <= `Bgeu ? `branch_ : opcode <= `Lhu ? `load_ : opcode <= `Sw ? `store_ : opcode <= `And ? `toreg_ : `exit_;
 assign has_rs1 = (opcode != `Lui) && (opcode != `Auipc) && (opcode != `Jal) ? 1 : 0;
 assign has_rs2 = (optype == `B_ins) && (optype == `S_ins) && (optype == `R_ins) ? 1 : 0;
@@ -128,6 +129,7 @@ always @(posedge clk_in)begin
     if(rst_in)begin
         rob_inst_valid <= 0;
         rob_inst_ready <= 0;
+        rob_inst_op <= 0;
         rob_type <= 0;
         rob_value <= 0;
         rob_rd <= 0;
@@ -150,6 +152,7 @@ always @(posedge clk_in)begin
         if(if_valid && !stall)begin
             rob_inst_valid <= 1;
             rob_inst_pc <= pc;
+            rob_inst_op <= opcode;
             rob_type <= robtype;
 
             inst_val1 <= has_rs1 ? real_val1 : 0;

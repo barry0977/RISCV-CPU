@@ -56,9 +56,9 @@ wire [31:0] new_val1,new_val2;
 
 //是否可以执行
 generate
-    genvar i;
-    for(i = 0; i < `RS_size; i = i + 1)begin
-        assign ready[i] = busy[i] && ((!is_qj[i]) && (!is_qk[i]));
+    genvar j;
+    for(j = 0; j < `RS_size; j = j + 1)begin:block
+        assign ready[j] = busy[j] && ((!is_qj[j]) && (!is_qk[j]));
     end
 endgenerate
 
@@ -74,9 +74,10 @@ assign new_has_rely2 = inst_has_rely2 && !(alu_valid && (alu_robid == inst_rely2
 assign new_val1 = !inst_has_rely1 ? inst_val1 : (alu_valid && (alu_robid == inst_rely1)) ? alu_val : (lsb_valid && (lsb_robid == inst_rely1)) ? lsb_val : 0;
 assign new_val2 = !inst_has_rely2 ? inst_val2 : (alu_valid && (alu_robid == inst_rely2)) ? alu_val : (lsb_valid && (lsb_robid == inst_rely2)) ? lsb_val : 0;
 
+
 always @(posedge clk_in)begin
     integer i;
-    if(rst_in||RS_clear) begin
+    if(rst_in || RS_clear) begin
         alu_op <= 0;
         alu_rs1 <= 0;
         alu_rs2 <= 0;

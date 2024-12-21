@@ -1,5 +1,6 @@
 `include "const.v"
-module Icache(
+
+module ICache(
     input wire clk_in,
     input wire rst_in,
     input wire rdy_in,

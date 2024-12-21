@@ -9,6 +9,7 @@ module ReorderBuffer(
     input wire inst_valid,//是否有指令传入
     input wire inst_ready,
     input wire [5:0] inst_op,
+    input wire [2:0] inst_robtype,
     input wire [4:0] inst_rd,
     input wire [31:0] inst_value,
     input wire [31:0] inst_pc,
@@ -69,10 +70,7 @@ reg                 isjump[`RoB_size-1:0];//之前是否跳转
 reg [`RoB_addr-1:0] head,tail;
 
 wire empty,full;
-wire [2:0] robtype;//rob类型
 wire ready_to_issue,ready_to_commit;
-
-assign robtype = op <= `Jalr ? `else_ : op <= `Bgeu : `branch_ : op <= `Lhu ? load_ : op <= `Sw ? `store_ : op <= `And ? `toreg_ : `exit_; 
 
 assign empty = head == tail;
 assign full = tail + 1 == head;
@@ -121,7 +119,7 @@ always @(posedge clk_in) begin
             busy[tail] <= 1;
             ready[tail] <= inst_ready;
             op[tail] <= inst_op;
-            RoBtype[tail] <= robtype;
+            RoBtype[tail] <= inst_robtype;
             dest[tail] <= inst_rd;
             value[tail] <= inst_value;
             pc[tail] <= inst_pc;
@@ -185,6 +183,8 @@ always @(posedge clk_in) begin
                             new_pc <= addr[head];
                         end
                     end
+                end
+                `exit_:begin
                 end
             endcase
         end
