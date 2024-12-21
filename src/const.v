@@ -51,6 +51,14 @@
 `define S_ins     7'b0100011   //包括Sb,Sh,Sw
 `define R_ins     7'b0110011   //包括Sub,Add,Sll,Slt,Sltu,Xor,Sra,Srl,Or,And
 
+//RoB中不同类型
+`define toreg_ 3'b001
+`define load_ 3'b010
+`define store_ 3'b011
+`define branch_ 3'b100
+`define else_ 3'b101 //Lui,Auipc,Jal,Jalr
+`define exit_ 3'b110
+
 //ROB
 `define RoB_addr 5
 `define RoB_size 32

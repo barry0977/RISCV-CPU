@@ -1,10 +1,4 @@
 ·include "const.v"
-`define toreg_ 3'b0
-`define load_ 3'b1
-`define store_ 3'b2
-`define branch_ 3'b3
-`define else_ 3'b4 //Lui,Auipc,Jal,Jalr
-`define exit_ 3'b5
 
 module ReorderBuffer(
     input wire clk_in,
@@ -18,7 +12,16 @@ module ReorderBuffer(
     input wire [4:0] inst_rd,
     input wire [31:0] inst_value,
     input wire [31:0] inst_pc,
+    input wire [31:0] inst_addr,
     input wire inst_isjump,
+
+    //Decoder询问是否已经ready
+    input wire [`RoB_addr-1:0] dc_rob_id1,
+    input wire [`RoB_addr-1:0] dc_rob_id2,
+    output wire dc_rob_id1_ready,
+    output wire dc_rob_id2_ready,
+    output wire [31:0] dc_rob_id1_value,
+    output wire [31:0] dc_rob_id2_value,
 
     //ALU执行完成的结果
     input wire alu_valid,
@@ -30,16 +33,16 @@ module ReorderBuffer(
     input wire [`RoB_addr-1:0] lsb_robid,
     input wire [31:0] lsb_val,
 
-    //给RF更新
+    //给RF更新(都用wire,没有延迟)
     //issue
-    output reg rf_issue,
-    output reg [4:0] rf_issue_rd,
-    output reg [`RoB_addr-1:0] rf_new_dep,
+    output wire rf_issue,
+    output wire [4:0] rf_issue_rd,
+    output wire [`RoB_addr-1:0] rf_new_dep,
     //commit
-    output reg rf_commit,
-    output reg [4:0] rf_commit_rd,
-    output reg [`RoB_addr-1:0] rf_robid,
-    output reg [31:0] rf_value,
+    output wire rf_commit,
+    output wire [4:0] rf_commit_rd,
+    output wire [`RoB_addr-1:0] rf_robid,
+    output wire [31:0] rf_value,
 
     //是否已满
     output wire rob_full,
@@ -67,15 +70,33 @@ reg [`RoB_addr-1:0] head,tail;
 
 wire empty,full;
 wire [2:0] robtype;//rob类型
+wire ready_to_issue,ready_to_commit;
 
 assign robtype = op <= `Jalr ? `else_ : op <= `Bgeu : `branch_ : op <= `Lhu ? load_ : op <= `Sw ? `store_ : op <= `And ? `toreg_ : `exit_; 
 
 assign empty = head == tail;
-assign full = tail + 1 == headl
+assign full = tail + 1 == head;
 assign rob_full = full;
 
+assign ready_to_issue = rdy_in && inst_valid && !full;
+assign ready_to_commit = rdy_in && busy[head] && ready[head];
+assign rf_commit = ready_to_commit && (RoBtype[head] == `toreg_ || RoBtype[head] == `load_ || RoBtype[head] == `else_);
+assign rf_commit_rd = rf_commit ? dest[head] : 0;
+assign rf_robid = rf_commit ? head : 0;
+assign rf_value = rf_commit ? value[head] : 0;
+assign rf_issue = ready_to_issue && (RoBtype[head] == `toreg_ || RoBtype[head] == `load_ || RoBtype[head] == `else_);
+assign rf_issue_rd = rf_issue ? inst_rd : 0;
+assign rf_new_dep = rf_issue ? tail : 0;
+
+//Decoder询问是否ready
+assign dc_rob_id1_ready = ready[dc_rob_id1] || (alu_valid && alu_robid == dc_rob_id1) || (lsb_valid && lsb_robid == dc_rob_id1);
+assign dc_rob_id1_ready = ready[dc_rob_id2] || (alu_valid && alu_robid == dc_rob_id2) || (lsb_valid && lsb_robid == dc_rob_id2);
+assign dc_rob_id1_value = ready[dc_rob_id1] ? value[dc_rob_id1] : (alu_valid && alu_robid == dc_rob_id1) ? alu_val : (lsb_valid && lsb_robid == dc_rob_id1) ? lsb_val;
+assign dc_rob_id1_value = ready[dc_rob_id2] ? value[dc_rob_id2] : (alu_valid && alu_robid == dc_rob_id2) ? alu_val : (lsb_valid && lsb_robid == dc_rob_id2) ? lsb_val;
+
+integer i;
 always @(posedge clk_in) begin
-    if(rst_in||clear)begin
+    if(rst_in || (clear && rdy_in))begin
         //清除RoB
         head <= 0;
         tail <= 0;
@@ -103,16 +124,9 @@ always @(posedge clk_in) begin
             RoBtype[tail] <= robtype;
             dest[tail] <= inst_rd;
             value[tail] <= inst_value;
-            pc[i] <= inst_pc;
-            isjump[i] <= inst_isjump;
-            rf_issue <= 1;
-            rf_issue_rd <= inst_rd;
-            rf_new_dep <= tail;
-        end
-        else begin
-            rf_issue <= 0;
-            rf_issue_rd <= 0;
-            rf_new_dep <= 0;
+            pc[tail] <= inst_pc;
+            addr[tail] <= inst_addr;
+            isjump[tail] <= inst_isjump;
         end
 
         //更新ready情况
@@ -126,15 +140,12 @@ always @(posedge clk_in) begin
         end
 
         //如果头部ready，则commit
-        if(busy[head]&&ready[head])begin
+        if(ready_to_commit)begin
             head <= head + 1;
             busy[head] <= 0;
             ready[head] <= 0;
-            rf_commit <= 1;
-            rf_commit_rd <= dest[head];
-            rf_robid <= head;
-            rf_value <= value[head];
             case(RoBtype[head])
+                //前三个都不需要操作，alu和lsb都已经操作了
                 `toreg_:begin
                 end
                 `load_:begin
@@ -142,6 +153,10 @@ always @(posedge clk_in) begin
                 `store_:begin
                 end
                 `else_:begin
+                    if(op[head] == `Jalr)begin
+                        clear <= 1;
+                        new_pc <= value[head];
+                    end
                 end
                 `branch_:begin
                     rob_valid <= 1;
@@ -154,12 +169,16 @@ always @(posedge clk_in) begin
                             new_pc <= pc[head] + 4;
                         end
                         else begin //预测不需要跳转
+                            clear <= 0;
+                            new_pc <= 0;
                         end
                     end
                     //需要跳转
                     else begin
                         should_jump <= 1;
                         if(isjump[head])begin //预测需要跳转
+                            clear <= 0;
+                            new_pc <= 0;
                         end
                         else begin //预测不需要跳转
                             clear <= 1;

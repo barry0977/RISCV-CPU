@@ -5,7 +5,7 @@ module RegisterFile(
     input wire rst_in,
     input wire rdy_in,
 
-    //与RS/LSB交互，获得寄存器的值或者依赖
+    //与Decoder交互，获得寄存器的值或者依赖
     input wire [4:0] rs1_id,
     input wire [4:0] rs2_id,
     output wire [31:0] val1,
@@ -25,21 +25,21 @@ module RegisterFile(
 
     //ROB commit时，CDB广播更新
     input wire commit_valid,
-    input [4:0] cdb_regid,
-    input [31:0] cdb_value,
-    input [`RoB_addr-1:0] cdb_RoBindex
+    input wire [4:0] cdb_regid,
+    input wire [31:0] cdb_value,
+    input wire [`RoB_addr-1:0] cdb_RoBindex
 );
 
 reg [31:0]          data[31:0];//储存的数据
 reg [`RoB_addr-1:0] rely[31:0];//最新值将由哪条指令算出
 reg                 busy[31:0];//是否有依赖
 
-assign has_rely1 = busy[rs1_id] || ((index != 0) && (index == rs1_id));
-assign has_rely2 = busy[rs2_id] || ((index != 0) && (index == rs2_id)); 
+assign has_rely1 = busy[rs1_id] || (issue_valid && (index != 0) && (index == rs1_id));
+assign has_rely2 = busy[rs2_id] || (issue_valid && (index != 0) && (index == rs2_id)); 
 assign val1 = data[rs1_id];
 assign val2 = data[rs2_id];
-assign get_rely1 = ((index != 0) && (index == rs1_id)) ? new_dep : rely[rs1_id];
-assign get_rely2 = ((index != 0) && (index == rs2_id)) ? new_dep : rely[rs2_id];
+assign get_rely1 = (issue_valid && (index != 0) && (index == rs1_id)) ? new_dep : rely[rs1_id];
+assign get_rely2 = (issue_valid && (index != 0) && (index == rs2_id)) ? new_dep : rely[rs2_id];
 
 integer i;
 always @(posedge clk_in)begin

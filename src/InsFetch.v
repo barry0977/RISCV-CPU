@@ -12,6 +12,8 @@ module InsFetch(
     output reg [31:0] if_inst,
     output reg [31:0] if_pc,
     output reg if_isjump,
+    input  wire dc_valid,
+    input  wire [31:0] dc_nextpc,
 
     //与ICache交互
     input wire hit,
@@ -38,8 +40,6 @@ wire [31:0] imm_B,imm_J;
 wire is_jal,is_jalr,is_B;
 
 assign instr = hit_inst;
-assign imm_B = {{20{instr[31]}},instr[7],instr[30:25],instr[11:8],1'b0};
-assign imm_J = {{12{instr[31]}},instr[19:12],instr[20],instr[30:21],1'b0};
 assign is_jal = hit_inst[6:0] == `Jal_ins;
 assign is_jalr = hit_inst[6:0] == `Jalr_ins;
 assign is_B = hit_inst[6:0] == `B_ins;
@@ -55,17 +55,17 @@ always @(posedge clk_in)begin
         state <= 0;
         work <= 0;
     end
+    //分支预测错误，修改pc
+    else if(rob_clear)begin
+        PC <= rob_newpc;
+        fetch_valid <= 0;
+        fetch_pc <= 0;
+        if_valid <= 0;
+        if_inst <= 0;
+        if_pc <= 0;
+        state <= 0;//恢复正常读取指令
+    end
     else if(rdy_in)begin
-        //分支预测错误，修改pc
-        if(rob_clear)begin
-            PC <= rob_newpc;
-            fetch_valid <= 0;
-            fetch_pc <= 0;
-            if_valid <= 0;
-            if_inst <= 0;
-            if_pc <= 0;
-            state <= 0;//恢复正常读取指令
-        end
         if(state == 0)begin 
             if(work == 0)begin //空闲,则向ICache请求指令
                 if(!stall)begin
@@ -73,7 +73,7 @@ always @(posedge clk_in)begin
                     fetch_pc <= PC;
                     work <= 1;//进入工作状态
                 end
-                else begin
+                else begin //暂停,直到Jalr返回结果
                     fetch_valid <= 0;
                     fetch_pc <= 0;
                 end
@@ -88,7 +88,6 @@ always @(posedge clk_in)begin
                     if_inst <= hit_inst;
                     if_pc <= PC;
                     if(is_jal)begin //读到Jal，直接跳转pc
-                        PC <= PC + imm_J;
                         if_isjump <= 1;
                     end
                     else if(is_jalr)begin //读到Jalr，暂停直到获得结果,state=1
@@ -97,20 +96,20 @@ always @(posedge clk_in)begin
                     end
                     else if(is_B)begin
                         if(jump)begin //预测跳转
-                            PC <= PC + imm_B;
                             if_isjump <= 1;
                         end
                         else begin //预测不跳转
-                            PC <= PC + 4;
                             if_isjump <= 0;
                         end
                     end
                     else begin
-                        PC <= PC + 4;
                         if_isjump <= 0;
                     end
                     fetch_valid <= 0;
                     fetch_pc <= 0;
+                end
+                if(dc_valid)begin //Decoder获取了指令
+                    PC <= dc_nextpc;
                     work <= 0;
                 end
             end
