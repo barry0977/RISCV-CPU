@@ -74,9 +74,8 @@ assign new_has_rely2 = inst_has_rely2 && !(alu_valid && (alu_robid == inst_rely2
 assign new_val1 = !inst_has_rely1 ? inst_val1 : (alu_valid && (alu_robid == inst_rely1)) ? alu_val : (lsb_valid && (lsb_robid == inst_rely1)) ? lsb_val : 0;
 assign new_val2 = !inst_has_rely2 ? inst_val2 : (alu_valid && (alu_robid == inst_rely2)) ? alu_val : (lsb_valid && (lsb_robid == inst_rely2)) ? lsb_val : 0;
 
-
+integer i;
 always @(posedge clk_in)begin
-    integer i;
     if(rst_in || RS_clear) begin
         alu_op <= 0;
         alu_rs1 <= 0;

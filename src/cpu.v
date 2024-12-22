@@ -1,5 +1,4 @@
 `include "./const.v"
-`include "./ReorderBuffer.v"
 // RISCV32 CPU top module
 // port modification allowed for debugging purposes
 
@@ -296,6 +295,9 @@ ReorderBuffer ROB(
   .rf_robid(ROB_RF_RoBindex),
   .rf_value(ROB_RF_value),
   .rob_full(DC_ROB_rob_full),
+  .rob_index(DC_ROB_rob_index),
+  .lsb_rob_valid(LSB_ROB_rob_valid),
+  .lsb_rob_headid(LSB_ROB_rob_head_id),
   .clear(flush),
   .new_pc(IF_ROB_rob_newpc),
   .rob_valid(Pre_ROB_rob_valid),

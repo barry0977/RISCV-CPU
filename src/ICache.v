@@ -52,10 +52,10 @@ always @(posedge clk_in)begin
                     data[index] <= mem_inst;
                     tag[index] = fetch_pc[17:`Cache_addr+2];
                 end
-                else begin
-                    hit <= 0;
-                    hit_inst <= 0;
-                end
+                // else begin
+                //     hit <= 0;
+                //     hit_inst <= 0;
+                // end
             end
             else begin 
                 if(exist)begin //命中
@@ -63,13 +63,17 @@ always @(posedge clk_in)begin
                     hit_inst <= data[fetch_pc[`Cache_addr+1:2]];
                 end
                 else begin
-                    hit <= 0;
-                    hit_inst <= 0;
+                    // hit <= 0;
+                    // hit_inst <= 0;
                     state <= 1;
                     mem_ask <= 1;
                     mem_addr <= fetch_pc;
                 end
             end
+        end
+        else begin
+            hit <= 0;
+            hit_inst <= 0;
         end
     end
 end

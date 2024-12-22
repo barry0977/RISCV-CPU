@@ -11,8 +11,8 @@ module decoder(
     input  wire [31:0] pc,
     input  wire isjump,
     output wire stall, //是否有元件已满
-    output reg  dc_valid,
-    output reg [31:0] dc_nextpc,
+    output wire dc_valid,
+    output wire [31:0] dc_nextpc,
 
     //向RF获取寄存器依赖关系
     output wire [4:0] rf_rs1,
@@ -78,12 +78,14 @@ wire [2:0] robtype;
 wire has_rs1,has_rs2;//是否使用rs1,rs2
 wire [31:0] real_val1,real_val2;
 
+reg [31:0] last_pc;
+
 assign stall = rob_full || rs_full || lsb_full;
 
 assign opcode = optype == `Lui_ins ? `Lui :
                 optype == `Auipc_ins ? `Auipc :
                 optype == `Jal_ins ? `Jal :
-                optype == `Jalr_ins ? `Jal :
+                optype == `Jalr_ins ? `Jalr :
                 optype == `L_ins ? (funct3 == 3'b000 ? `Lb :
                                     funct3 == 3'b001 ? `Lh :
                                     funct3 == 3'b010 ? `Lw :
@@ -116,7 +118,7 @@ assign opcode = optype == `Lui_ins ? `Lui :
                                     funct3 == 3'b111 ? `And : 0) : `Exit;
 assign robtype = (opcode >= `Lui && opcode <= `Jalr) ? `else_ : opcode <= `Bgeu ? `branch_ : opcode <= `Lhu ? `load_ : opcode <= `Sw ? `store_ : opcode <= `And ? `toreg_ : `exit_;
 assign has_rs1 = (opcode != `Lui) && (opcode != `Auipc) && (opcode != `Jal) ? 1 : 0;
-assign has_rs2 = (optype == `B_ins) && (optype == `S_ins) && (optype == `R_ins) ? 1 : 0;
+assign has_rs2 = (optype == `B_ins) || (optype == `S_ins) || (optype == `R_ins) ? 1 : 0;
 assign rf_rs1 = rs1;
 assign rf_rs2 = rs2;
 assign rob_id1 = rf_rely1;
@@ -124,6 +126,8 @@ assign rob_id2 = rf_rely2;
 assign real_val1 = (!rf_has_rely1) ? rf_val1 : (rob_id1_ready ? rob_id1_value : 0);
 assign real_val2 = (!rf_has_rely2) ? rf_val2 : (rob_id2_ready ? rob_id2_value : 0);
 
+assign dc_valid = if_valid && (last_pc != pc) && !stall;
+assign dc_nextpc = optype == `Jal_ins ? pc + imm_J : (optype == `B_ins && isjump) ? pc + imm_B : pc + 4;
 
 always @(posedge clk_in)begin
     if(rst_in)begin
@@ -145,8 +149,7 @@ always @(posedge clk_in)begin
         inst_rely1 <= 0;
         inst_rely2 <= 0;
         inst_imm <= 0;
-        dc_nextpc <= 0;
-        dc_valid <= 0;
+        last_pc <= 32'hffffffff;
     end
     else if(rdy_in)begin
         if(if_valid && !stall)begin
@@ -163,7 +166,7 @@ always @(posedge clk_in)begin
             inst_rely2 <= rf_rely2;
             inst_op <= opcode;
             RoB_index <= rob_index;
-            dc_valid <= 1;
+            last_pc <= pc;
             if(optype == `L_ins || optype == `S_ins)begin
                 rob_inst_ready <= 0;
                 lsb_inst_valid <= 1;
@@ -179,11 +182,10 @@ always @(posedge clk_in)begin
                 end
                 rob_addr <= 0;
                 rob_isjump <= 0;
-                dc_nextpc <= pc + 4;
             end
             else begin
                 inst_imm <= 0;
-                if(opcode == `Lui)begin
+                if(optype == `Lui_ins)begin
                     rob_inst_ready <= 1;
                     lsb_inst_valid <= 0;
                     rs_inst_valid <= 0;
@@ -191,9 +193,8 @@ always @(posedge clk_in)begin
                     rob_rd <= rd;
                     rob_addr <= 0;
                     rob_isjump <= 0;
-                    dc_nextpc <= pc + 4;
                 end
-                else if(opcode == `Auipc)begin
+                else if(optype == `Auipc_ins)begin
                     rob_inst_ready <= 1;
                     lsb_inst_valid <= 0;
                     rs_inst_valid <= 0;
@@ -201,9 +202,8 @@ always @(posedge clk_in)begin
                     rob_rd <= rd;
                     rob_addr <= 0;
                     rob_isjump <= 0;
-                    dc_nextpc <= pc + 4;
                 end
-                else if(opcode == `Jal)begin
+                else if(optype == `Jal_ins)begin
                     rob_inst_ready <= 1;
                     lsb_inst_valid <= 0;
                     rs_inst_valid <= 0;
@@ -211,9 +211,8 @@ always @(posedge clk_in)begin
                     rob_rd <= rd;
                     rob_addr <= 0;
                     rob_isjump <= 1;
-                    dc_nextpc <= pc + imm_J;
                 end
-                else if(opcode == `Jalr)begin
+                else if(optype == `Jalr_ins)begin
                     rob_inst_ready <= 0;
                     lsb_inst_valid <= 0;
                     rs_inst_valid <= 1;
@@ -221,7 +220,6 @@ always @(posedge clk_in)begin
                     rob_rd <= rd;
                     rob_addr <= 0;
                     rob_isjump <= 1;
-                    dc_nextpc <= pc + 4;
                 end
                 else if(optype == `B_ins)begin
                     rob_inst_ready <= 0;
@@ -231,12 +229,6 @@ always @(posedge clk_in)begin
                     rob_rd <= rd;
                     rob_addr <= pc + imm_B;
                     rob_isjump <= isjump;
-                    if(isjump)begin //预测跳转
-                        dc_nextpc <= pc + imm_B;
-                    end
-                    else begin //预测不跳转
-                        dc_nextpc <= pc + 4;
-                    end
                 end
                 else begin
                     rob_inst_ready <= 0;
@@ -246,13 +238,13 @@ always @(posedge clk_in)begin
                     rob_rd <= rd;
                     rob_addr <= 0;
                     rob_isjump <= 0;
-                    dc_nextpc <= pc + 4;
                 end
             end
         end
         else begin
-            dc_valid <= 0;
-            dc_nextpc <= 0;
+            rob_inst_valid <= 0;
+            rs_inst_valid <= 0;
+            lsb_inst_valid <= 0;
         end
     end
 end

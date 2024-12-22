@@ -34,6 +34,9 @@ always @(posedge clk_in)begin
         `Jal:begin
             result <= rs2 + 4;
         end
+        `Jalr:begin
+            result <= rs1 + rs2;
+        end
         `Beq:begin
             if(rs1 == rs2)begin
                 result <= 1;

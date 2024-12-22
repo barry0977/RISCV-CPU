@@ -80,6 +80,7 @@ assign new_val2 = !inst_has_rely2 ? inst_val2 : (alu_valid && (alu_robid == inst
 integer i;
 always @(posedge clk_in)begin
     if(rst_in||lsb_clear)begin
+        state <= 0;
         head <= 0;
         tail <= 0;
         request <= 0;
@@ -139,7 +140,7 @@ always @(posedge clk_in)begin
                     mem_op <= op[head];
                     mem_addr <= vj[head] + imm[head];
                     mem_data <= 0;
-                    lsb_robid <= rob_head_id;
+                    lsb_robid <= RoBindex[head];
                     state <= 1;
                 end
                 else if(rob_valid && rob_head_id == RoBindex[head])begin //store要等到rob头部也是该指令才执行
@@ -149,7 +150,7 @@ always @(posedge clk_in)begin
                     mem_op <= op[head];
                     mem_addr <= vj[head] + imm[head];
                     mem_data <= vk[head];
-                    lsb_robid <= rob_head_id;
+                    lsb_robid <= RoBindex[head];
                     state <= 2;
                 end
             end
