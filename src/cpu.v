@@ -1,7 +1,4 @@
 `include "./const.v"
-`include "./memory.v"
-`include "./ICache.v"
-`include "./alu.v"
 `include "./ReorderBuffer.v"
 // RISCV32 CPU top module
 // port modification allowed for debugging purposes
