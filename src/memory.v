@@ -24,7 +24,9 @@ module MemoryController(
     input  wire [31:0] lsb_mem_addr,
     input  wire [31:0] lsb_mem_data,
     output reg  lsb_mem_valid,
-    output reg  [31:0] lsb_mem_val
+    output reg  [31:0] lsb_mem_val,
+
+    input  wire rob_clear
 );
 
 reg [2:0] total_size;//总共需要读写的字节数

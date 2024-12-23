@@ -32,6 +32,7 @@ module decoder(
     input  wire [31:0] rob_id2_value,
 
     //给RoB
+    input  wire rob_clear,
     input  wire rob_full,
     input  wire [`RoB_addr-1:0] rob_index,//加入后在RoB中的序号
     output reg  rob_inst_valid,
@@ -130,7 +131,7 @@ assign dc_valid = if_valid && (last_pc != pc) && !stall;
 assign dc_nextpc = optype == `Jal_ins ? pc + imm_J : (optype == `B_ins && isjump) ? pc + imm_B : pc + 4;
 
 always @(posedge clk_in)begin
-    if(rst_in)begin
+    if(rst_in || rob_clear)begin //分支预测错误时要把此时收到的指令清空
         rob_inst_valid <= 0;
         rob_inst_ready <= 0;
         rob_inst_op <= 0;

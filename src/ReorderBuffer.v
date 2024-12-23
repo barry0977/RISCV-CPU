@@ -90,15 +90,15 @@ assign rf_commit = ready_to_commit && (RoBtype[head] == `toreg_ || RoBtype[head]
 assign rf_commit_rd = rf_commit ? dest[head] : 0;
 assign rf_robid = rf_commit ? head : 0;
 assign rf_value = rf_commit ? value[head] : 0;
-assign rf_issue = ready_to_issue && (RoBtype[head] == `toreg_ || RoBtype[head] == `load_ || RoBtype[head] == `else_);
+assign rf_issue = ready_to_issue && (inst_robtype == `toreg_ || inst_robtype == `load_ || inst_robtype == `else_);
 assign rf_issue_rd = rf_issue ? inst_rd : 0;
 assign rf_new_dep = rf_issue ? tail : 0;
 
 //Decoder询问是否ready
 assign dc_rob_id1_ready = ready[dc_rob_id1] || (alu_valid && alu_robid == dc_rob_id1) || (lsb_valid && lsb_robid == dc_rob_id1);
-assign dc_rob_id1_ready = ready[dc_rob_id2] || (alu_valid && alu_robid == dc_rob_id2) || (lsb_valid && lsb_robid == dc_rob_id2);
+assign dc_rob_id2_ready = ready[dc_rob_id2] || (alu_valid && alu_robid == dc_rob_id2) || (lsb_valid && lsb_robid == dc_rob_id2);
 assign dc_rob_id1_value = ready[dc_rob_id1] ? value[dc_rob_id1] : (alu_valid && alu_robid == dc_rob_id1) ? alu_val : (lsb_valid && lsb_robid == dc_rob_id1) ? lsb_val : 0;
-assign dc_rob_id1_value = ready[dc_rob_id2] ? value[dc_rob_id2] : (alu_valid && alu_robid == dc_rob_id2) ? alu_val : (lsb_valid && lsb_robid == dc_rob_id2) ? lsb_val : 0;
+assign dc_rob_id2_value = ready[dc_rob_id2] ? value[dc_rob_id2] : (alu_valid && alu_robid == dc_rob_id2) ? alu_val : (lsb_valid && lsb_robid == dc_rob_id2) ? lsb_val : 0;
 
 //debug info
 wire [5:0] ophead= op[head];

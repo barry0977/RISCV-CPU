@@ -162,7 +162,8 @@ MemoryController MemCtrl(
   .lsb_mem_addr(Mem_LSB_lsb_mem_addr),
   .lsb_mem_data(Mem_LSB_lsb_mem_data),
   .lsb_mem_valid(Mem_LSB_lsb_mem_valid),
-  .lsb_mem_val(Mem_LSB_lsb_mem_val)
+  .lsb_mem_val(Mem_LSB_lsb_mem_val),
+  .rob_clear(flush)
 );
 
 ICache IC(
@@ -176,7 +177,8 @@ ICache IC(
   .fetch_valid(IC_IF_fetch_valid),
   .fetch_pc(IC_IF_fetch_pc),
   .hit(IC_IF_hit),
-  .hit_inst(IC_IF_hit_inst)
+  .hit_inst(IC_IF_hit_inst),
+  .rob_clear(flush)
 );
 
 predictor Pre(
@@ -236,6 +238,7 @@ decoder Decoder(
   .rob_id2_ready(DC_ROB_rob_id2_ready),
   .rob_id1_value(DC_ROB_rob_id1_value),
   .rob_id2_value(DC_ROB_rob_id2_value),
+  .rob_clear(flush),
   .rob_full(DC_ROB_rob_full),
   .rob_index(DC_ROB_rob_index),
   .rob_inst_valid(DC_ROB_rob_inst_valid),
@@ -375,7 +378,8 @@ ALU ALU(
   .robid(RS_ALU_id),
   .result(alu_val),
   .alu_robid(alu_robid),
-  .alu_valid(alu_valid)
+  .alu_valid(alu_valid),
+  .rob_clear(flush)
 );
 
 RegisterFile RF(

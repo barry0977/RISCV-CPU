@@ -169,6 +169,7 @@ always @(posedge clk_in)begin
         2:begin //store
             if(mem_valid)begin
                 lsb_valid <= 1;
+                lsb_val <= mem_addr;
                 state <= 0;
                 request <= 0;
             end

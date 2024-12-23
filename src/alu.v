@@ -13,7 +13,9 @@ module ALU(
     //将结果广播给所有元件
     output reg [31:0] result,
     output reg [`RoB_addr-1:0] alu_robid,
-    output reg alu_valid
+    output reg alu_valid,
+
+    input  wire rob_clear
 );
 
 always @(posedge clk_in)begin

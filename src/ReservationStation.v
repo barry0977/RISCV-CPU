@@ -64,7 +64,7 @@ endgenerate
 
 //找到第一行空的和第一行可以执行的
 assign first_empty = busy[0] == 0 ? 0 : busy[1] == 0 ? 1 : busy[2] == 0 ? 2 : busy[3] == 0 ? 3 : busy[4] == 0 ? 4 : busy[5] == 0 ? 5 : busy[6] == 0 ? 6 : busy[7] == 0 ? 7 : 8;
-assign first_exe = ready[0] == 0 ? 0 : ready[1] == 0 ? 1 : ready[2] == 0 ? 2 : ready[3] == 0 ? 3 : ready[4] == 0 ? 4 : ready[5] == 0 ? 5 : ready[6] == 0 ? 6 : ready[7] == 0 ? 7 : 8;
+assign first_exe = ready[0] == 1 ? 0 : ready[1] == 1 ? 1 : ready[2] == 1 ? 2 : ready[3] == 1 ? 3 : ready[4] == 1 ? 4 : ready[5] == 1 ? 5 : ready[6] == 1 ? 6 : ready[7] == 1 ? 7 : 8;
 
 assign rs_full = first_empty == 8;
 

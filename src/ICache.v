@@ -15,7 +15,9 @@ module ICache(
     input wire fetch_valid,
     input wire [31:0] fetch_pc,
     output reg hit,
-    output reg [31:0] hit_inst
+    output reg [31:0] hit_inst,
+
+    input  wire rob_clear
 );
 
 //地址有效位为[17:0]

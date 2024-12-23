@@ -41,10 +41,6 @@ assign val2 = data[rs2_id];
 assign get_rely1 = (issue_valid && (index != 0) && (index == rs1_id)) ? new_dep : rely[rs1_id];
 assign get_rely2 = (issue_valid && (index != 0) && (index == rs2_id)) ? new_dep : rely[rs2_id];
 
-//debug 
-wire [31:0] x1_val = data[1];
-
-
 integer i;
 always @(posedge clk_in)begin
     if(rst_in)begin
@@ -76,5 +72,37 @@ always @(posedge clk_in)begin
         end
     end
 end
-
+// for debug
+    wire [31 : 0] reg_zero = data[0];  // 00
+    wire [31 : 0] reg_ra = data[1];    // 01
+    wire [31 : 0] reg_sp = data[2];    // 02
+    wire [31 : 0] reg_gp = data[3];    // 03
+    wire [31 : 0] reg_tp = data[4];    // 04
+    wire [31 : 0] reg_t0 = data[5];    // 05
+    wire [31 : 0] reg_t1 = data[6];    // 06
+    wire [31 : 0] reg_t2 = data[7];    // 07
+    wire [31 : 0] reg_s0 = data[8];    // 08
+    wire [31 : 0] reg_s1 = data[9];    // 09
+    wire [31 : 0] reg_a0 = data[10];   // 0A
+    wire [31 : 0] reg_a1 = data[11];   // 0B
+    wire [31 : 0] reg_a2 = data[12];   // 0C
+    wire [31 : 0] reg_a3 = data[13];   // 0D
+    wire [31 : 0] reg_a4 = data[14];   // 0E
+    wire [31 : 0] reg_a5 = data[15];   // 0F
+    wire [31 : 0] reg_a6 = data[16];   // 10
+    wire [31 : 0] reg_a7 = data[17];   // 11
+    wire [31 : 0] reg_s2 = data[18];   // 12
+    wire [31 : 0] reg_s3 = data[19];   // 13
+    wire [31 : 0] reg_s4 = data[20];   // 14
+    wire [31 : 0] reg_s5 = data[21];   // 15
+    wire [31 : 0] reg_s6 = data[22];   // 16
+    wire [31 : 0] reg_s7 = data[23];   // 17
+    wire [31 : 0] reg_s8 = data[24];   // 18
+    wire [31 : 0] reg_s9 = data[25];   // 19
+    wire [31 : 0] reg_s10 = data[26];  // 1A
+    wire [31 : 0] reg_s11 = data[27];  // 1B
+    wire [31 : 0] reg_t3 = data[28];   // 1C
+    wire [31 : 0] reg_t4 = data[29];   // 1D
+    wire [31 : 0] reg_t5 = data[30];   // 1E
+    wire [31 : 0] reg_t6 = data[31];   // 1F
 endmodule
