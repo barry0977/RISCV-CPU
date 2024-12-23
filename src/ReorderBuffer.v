@@ -78,7 +78,7 @@ wire empty,full;
 wire ready_to_issue,ready_to_commit;
 
 assign empty = head == tail;
-assign full = tail + 1 == head;
+assign full = (((tail + 1) % `RoB_size) == head);
 assign rob_full = full;
 assign rob_index = tail;
 assign lsb_rob_valid = (!empty) && (RoBtype[head] == `load_ || RoBtype[head] == `store_);
@@ -164,7 +164,7 @@ always @(posedge clk_in) begin
 
         //如果头部ready，则commit
         if(ready_to_commit)begin
-            // $display("commit cnt: %h rob id: %h value: %h addr: %h",cnt,next_head,value[head],pc[head]);
+            $display("commit cnt: %h rob id: %h value: %h addr: %h",cnt,next_head,value[head],pc[head]);
             cnt = cnt + 1;
             head <= head + 1;
             busy[head] <= 0;

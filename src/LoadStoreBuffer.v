@@ -68,7 +68,7 @@ wire [31:0] new_val1,new_val2;
 reg [1:0] state;//0-空闲,1-load,2-store
 
 assign empty = head == tail;
-assign full = tail + 1 == head;
+assign full = (((tail + 1) % `LSB_size) == head);
 assign lsb_full = full;
 
 //判断同一周期新更新是否会更新依赖
@@ -76,6 +76,11 @@ assign new_has_rely1 = inst_has_rely1 && !(alu_valid && (alu_robid == inst_rely1
 assign new_has_rely2 = inst_has_rely2 && !(alu_valid && (alu_robid == inst_rely2)) && !(lsb_valid && (lsb_robid == inst_rely2));
 assign new_val1 = !inst_has_rely1 ? inst_val1 : (alu_valid && (alu_robid == inst_rely1)) ? alu_val : (lsb_valid && (lsb_robid == inst_rely1)) ? lsb_val : 0;
 assign new_val2 = !inst_has_rely2 ? inst_val2 : (alu_valid && (alu_robid == inst_rely2)) ? alu_val : (lsb_valid && (lsb_robid == inst_rely2)) ? lsb_val : 0;
+
+//debug
+wire [`RoB_addr-1:0] head_robid = RoBindex[head];
+wire [31:0] vj_head = vj[head];
+wire [31:0] vk_head = vk[head];
 
 integer i;
 always @(posedge clk_in)begin
