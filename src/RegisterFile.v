@@ -41,6 +41,10 @@ assign val2 = data[rs2_id];
 assign get_rely1 = (issue_valid && (index != 0) && (index == rs1_id)) ? new_dep : rely[rs1_id];
 assign get_rely2 = (issue_valid && (index != 0) && (index == rs2_id)) ? new_dep : rely[rs2_id];
 
+//debug 
+wire [31:0] x1_val = data[1];
+
+
 integer i;
 always @(posedge clk_in)begin
     if(rst_in)begin

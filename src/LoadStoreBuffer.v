@@ -138,7 +138,7 @@ always @(posedge clk_in)begin
                     request <= 1;
                     load_or_store <= 0;
                     mem_op <= op[head];
-                    mem_addr <= vj[head] + imm[head];
+                    mem_addr <= vj[head] + vk[head];
                     mem_data <= 0;
                     lsb_robid <= RoBindex[head];
                     state <= 1;

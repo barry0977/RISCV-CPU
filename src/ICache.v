@@ -25,9 +25,11 @@ reg [31:0]             data[`Cache_size-1:0];
 reg [17:`Cache_addr+2] tag[`Cache_size-1:0];
 
 reg state;//记录当前是否在从memory取指令
-wire exist;//是否存在cache中或正好从memory取出
+wire exist;//是否存在cache中
 wire [`Cache_addr+1:2] index;
+wire [`Cache_addr+1:2] mem_index;
 assign index = fetch_pc[`Cache_addr+1:2];
+assign mem_index = mem_addr[`Cache_addr+1:2];
 assign exist = valid[index] && tag[index] == fetch_pc[17:`Cache_addr+2];
 
 integer i;
@@ -43,14 +45,14 @@ always @(posedge clk_in)begin
         if(fetch_valid)begin
             if(state == 1)begin //在从内存取指令
                 if(mem_valid)begin
-                    hit <= 1;
-                    hit_inst <= mem_inst;
+                    // hit <= 1;
+                    // hit_inst <= mem_inst;
                     state <= 0;
                     mem_ask <= 0;
                     mem_addr <= 0;
-                    valid[index] <= 1;
-                    data[index] <= mem_inst;
-                    tag[index] = fetch_pc[17:`Cache_addr+2];
+                    valid[mem_index] <= 1;
+                    data[mem_index] <= mem_inst;
+                    tag[mem_index] = mem_addr[17:`Cache_addr+2];
                 end
                 // else begin
                 //     hit <= 0;

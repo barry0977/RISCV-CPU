@@ -100,16 +100,22 @@ assign dc_rob_id1_ready = ready[dc_rob_id2] || (alu_valid && alu_robid == dc_rob
 assign dc_rob_id1_value = ready[dc_rob_id1] ? value[dc_rob_id1] : (alu_valid && alu_robid == dc_rob_id1) ? alu_val : (lsb_valid && lsb_robid == dc_rob_id1) ? lsb_val : 0;
 assign dc_rob_id1_value = ready[dc_rob_id2] ? value[dc_rob_id2] : (alu_valid && alu_robid == dc_rob_id2) ? alu_val : (lsb_valid && lsb_robid == dc_rob_id2) ? lsb_val : 0;
 
-wire [5:0] ophead;
-assign ophead = op[head];
+//debug info
+wire [5:0] ophead= op[head];
 wire [`RoB_addr-1:0] next_head;
 assign next_head = head + 1;
+wire [31:0] pc_head= pc[head];
+wire [31:0] value_head = value[head];
+wire [31:0] addr_head = addr[head];
+
 integer i;
 integer cnt;
 always @(posedge clk_in) begin
     if(rst_in || (clear && rdy_in))begin
         //清除RoB
-        cnt =0;
+        if(rst_in)begin
+            cnt = 0;
+        end
         head <= 0;
         tail <= 0;
         clear <= 0;
@@ -158,7 +164,7 @@ always @(posedge clk_in) begin
 
         //如果头部ready，则commit
         if(ready_to_commit)begin
-            $display("commit cnt: %h rob id: %h value: %h addr: %h",cnt,next_head,value[head],pc[head]);
+            // $display("commit cnt: %h rob id: %h value: %h addr: %h",cnt,next_head,value[head],pc[head]);
             cnt = cnt + 1;
             head <= head + 1;
             busy[head] <= 0;
