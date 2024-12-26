@@ -21,18 +21,16 @@ module ICache(
 );
 
 //地址有效位为[17:0]
-//[1:0]无意义，[`Cache_addr+1:2]作为index,其余位作为tag
+//[1:0]无意义，[`Cache_addr:1]作为index,其余位作为tag
 reg                    valid[`Cache_size-1:0];
 reg [31:0]             data[`Cache_size-1:0];
-reg [17:`Cache_addr+2] tag[`Cache_size-1:0];
+reg [17:`Cache_addr+1] tag[`Cache_size-1:0];
 
 reg state;//记录当前是否在从memory取指令
 wire exist;//是否存在cache中
-wire [`Cache_addr+1:2] index;
-wire [`Cache_addr+1:2] mem_index;
-assign index = fetch_pc[`Cache_addr+1:2];
-assign mem_index = mem_addr[`Cache_addr+1:2];
-assign exist = valid[index] && tag[index] == fetch_pc[17:`Cache_addr+2];
+wire [`Cache_addr:1] index = fetch_pc[`Cache_addr:1];
+wire [`Cache_addr:1] mem_index = mem_addr[`Cache_addr:1];
+assign exist = valid[index] && tag[index] == fetch_pc[17:`Cache_addr+1];
 
 integer i;
 always @(posedge clk_in)begin
@@ -54,7 +52,7 @@ always @(posedge clk_in)begin
                     mem_addr <= 0;
                     valid[mem_index] <= 1;
                     data[mem_index] <= mem_inst;
-                    tag[mem_index] = mem_addr[17:`Cache_addr+2];
+                    tag[mem_index] <= mem_addr[17:`Cache_addr+1];
                 end
                 // else begin
                 //     hit <= 0;
@@ -64,7 +62,7 @@ always @(posedge clk_in)begin
             else begin 
                 if(exist)begin //命中
                     hit <= 1;
-                    hit_inst <= data[fetch_pc[`Cache_addr+1:2]];
+                    hit_inst <= data[fetch_pc[`Cache_addr:1]];
                 end
                 else begin
                     // hit <= 0;
