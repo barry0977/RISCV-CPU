@@ -102,13 +102,6 @@ assign dc_rob_id2_ready = ready[dc_rob_id2] || (alu_valid && alu_robid == dc_rob
 assign dc_rob_id1_value = ready[dc_rob_id1] ? value[dc_rob_id1] : (alu_valid && alu_robid == dc_rob_id1) ? alu_val : (lsb_valid && lsb_robid == dc_rob_id1) ? lsb_val : 0;
 assign dc_rob_id2_value = ready[dc_rob_id2] ? value[dc_rob_id2] : (alu_valid && alu_robid == dc_rob_id2) ? alu_val : (lsb_valid && lsb_robid == dc_rob_id2) ? lsb_val : 0;
 
-//debug info
-wire [5:0] ophead= op[head];
-wire [`RoB_addr-1:0] next_head;
-assign next_head = head + 1;
-wire [31:0] pc_head= pc[head];
-wire [31:0] value_head = value[head];
-wire [31:0] addr_head = addr[head];
 
 integer i;
 integer cnt;
