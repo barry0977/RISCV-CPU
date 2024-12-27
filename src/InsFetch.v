@@ -35,11 +35,18 @@ assign pc_to_pre = PC;//直接用导线连接，可以在同一个周期内获�
 reg [31:0] PC;
 reg state;//0-idle,1-stall(jalr)
 reg work;//0-idle,1-busy
-wire is_jal,is_jalr,is_B;
 
-assign is_jal = hit_inst[6:0] == `Jal_ins;
-assign is_jalr = hit_inst[6:0] == `Jalr_ins;
-assign is_B = hit_inst[6:0] == `B_ins;
+wire is_cins = hit_inst[1:0] != 2'b11;
+
+wire is_jal = hit_inst[6:0] == `Jal_ins;
+wire is_jalr = hit_inst[6:0] == `Jalr_ins;
+wire is_B = hit_inst[6:0] == `B_ins;
+wire is_jal_c = (hit_inst[1:0] == 2'b01) && (hit_inst[15:13] == 3'b001 || hit_inst[15:13] == 3'b101);//c.jal,c.j
+wire is_jalr_c = (hit_inst[1:0] == 2'b10) && (hit_inst[15:13] == 3'b100) && (hit_inst[6:2] == 0);//c.jr,c.jalr
+wire is_B_c = (hit_inst[1:0] == 2'b01) && (hit_inst[15:13] == 3'b110 || hit_inst[15:13] == 3'b111);//c.beqz,c.bnez
+wire jal = (is_cins && is_jal_c) || (!is_cins && is_jal);
+wire jalr = (is_cins && is_jalr_c) || (!is_cins && is_jalr);
+wire B = (is_cins && is_B_c) || (!is_cins && is_B);
 
 always @(posedge clk_in)begin
     if(rst_in)begin
@@ -81,14 +88,13 @@ always @(posedge clk_in)begin
                     if_valid <= 1;
                     if_inst <= hit_inst;
                     if_pc <= PC;
-                    if(is_jal)begin //读到Jal，直接跳转pc
+                    if(jal)begin //读到Jal，直接跳转pc
                         if_isjump <= 1;
                     end
-                    else if(is_jalr)begin //读到Jalr，暂停直到获得结果,state=1
-                        // state <= 1;
+                    else if(jalr)begin //读到Jalr，暂停直到获得结果,state=1
                         if_isjump <= 0;
                     end
-                    else if(is_B)begin
+                    else if(B)begin
                         if(jump)begin //预测跳转
                             if_isjump <= 1;
                         end
@@ -104,7 +110,7 @@ always @(posedge clk_in)begin
                 end
 
                 if(dc_valid)begin //Decoder获取了指令
-                    if(is_jalr)begin
+                    if(jalr)begin
                         state <= 1;
                     end
                     PC <= dc_nextpc;

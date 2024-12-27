@@ -19,8 +19,8 @@ reg [1:0] pred[63:0]; // 00,01-不跳转，10,11-跳转
 wire [5:0] index;
 wire [5:0] if_index;
 
-assign index = rob_now_pc[7:2];
-assign if_index = if_pc[7:2];
+assign index = rob_now_pc[6:1];
+assign if_index = if_pc[6:1];
 assign tojump = pred[if_index] >= 2'b10;
 
 integer i;

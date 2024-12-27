@@ -40,6 +40,32 @@
 `define And    6'b100101
 `define Exit   6'b100110
 
+`define C_addi 1
+`define C_slli 2
+`define C_jr   3
+`define C_jalr 4
+`define C_add  5
+`define C_mv   6
+`define C_lwsp 7
+`define C_swsp 8
+`define C_jal  9
+`define C_li   10
+`define C_addi16sp 11
+`define C_lui  12
+`define C_srli 13
+`define C_srai 14
+`define C_andi 15
+`define C_sub  16
+`define C_xor  17
+`define C_or   18
+`define C_and  19
+`define C_beqz 20
+`define C_bnez 21
+`define C_lw   22
+`define C_sw   23
+`define C_j    24
+`define C_addi4spn 25
+
 //用于decoder分析指令类型
 `define Lui_ins   7'b0110111
 `define Auipc_ins 7'b0010111
