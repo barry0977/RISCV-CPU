@@ -352,10 +352,10 @@ always @(posedge clk_in)begin
                             rob_isjump <= 0;
 
                             inst_imm <= 0;
-                            inst_val1 <= ;
-                            inst_val2 <= ;
-                            inst_has_rely1 <= ;
-                            inst_has_rely2 <= ;
+                            // inst_val1 <= ;
+                            // inst_val2 <= ;
+                            // inst_has_rely1 <= ;
+                            // inst_has_rely2 <= ;
                         end
                         3'b010:begin //c.lw
                             rob_inst_op <= `Lw;
