@@ -356,7 +356,6 @@ always @(posedge clk_in)begin
                             inst_val2 <= ;
                             inst_has_rely1 <= ;
                             inst_has_rely2 <= ;
-                            inst_
                         end
                         3'b010:begin //c.lw
                             rob_inst_op <= `Lw;
