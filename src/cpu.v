@@ -102,6 +102,7 @@ wire DC_ROB_rob_full;
 wire [`RoB_addr-1:0] DC_ROB_rob_index;
 wire DC_ROB_rob_inst_valid;
 wire DC_ROB_rob_inst_ready;
+wire DC_ROB_iscins;
 wire [5:0] DC_ROB_inst_op;
 wire [2:0] DC_ROB_rob_type;
 wire [31:0] DC_ROB_rob_value;
@@ -243,6 +244,7 @@ Cdecoder Decoder(
   .rob_index(DC_ROB_rob_index),
   .rob_inst_valid(DC_ROB_rob_inst_valid),
   .rob_inst_ready(DC_ROB_rob_inst_ready),
+  .rob_iscins(DC_ROB_iscins),
   .rob_inst_op(DC_ROB_inst_op),
   .rob_type(DC_ROB_rob_type),
   .rob_value(DC_ROB_rob_value),
@@ -271,6 +273,7 @@ ReorderBuffer ROB(
   .rdy_in(rdy_in),
   .inst_valid(DC_ROB_rob_inst_valid),
   .inst_ready(DC_ROB_rob_inst_ready),
+  .inst_iscins(DC_ROB_iscins),
   .inst_op(DC_ROB_inst_op),
   .inst_robtype(DC_ROB_rob_type),
   .inst_rd(DC_ROB_rob_rd),

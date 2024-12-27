@@ -8,6 +8,7 @@ module ReorderBuffer(
     //从Decoder获取的信息
     input wire inst_valid,//是否有指令传入
     input wire inst_ready,
+    input wire inst_iscins,
     input wire [5:0] inst_op,
     input wire [2:0] inst_robtype,
     input wire [4:0] inst_rd,
@@ -65,6 +66,7 @@ module ReorderBuffer(
 
 reg                 ready[`RoB_size-1:0];
 reg [5:0]           op[`RoB_size-1:0];
+reg                 is_c[`RoB_size-1:0];
 reg [2:0]           RoBtype[`RoB_size-1:0];
 reg                 busy[`RoB_size-1:0];
 reg [4:0]           dest[`RoB_size-1:0];//对应的目标寄存器
@@ -123,6 +125,7 @@ always @(posedge clk_in) begin
         for(i = 0; i < `RoB_size; i = i + 1)begin
             ready[i] <= 0;
             op[i] <= 0;
+            is_c[i] <= 0;
             RoBtype[i] <= 0;
             busy[i] <= 0;
             value[i] <= 0;
@@ -139,6 +142,7 @@ always @(posedge clk_in) begin
             busy[tail] <= 1;
             ready[tail] <= inst_ready;
             op[tail] <= inst_op;
+            is_c[tail] <= inst_iscins;
             RoBtype[tail] <= inst_robtype;
             dest[tail] <= inst_rd;
             value[tail] <= inst_value;
@@ -191,7 +195,12 @@ always @(posedge clk_in) begin
                         should_jump <= 0;
                         if(isjump[head])begin //预测需要跳转
                             clear <= 1;
-                            new_pc <= pc[head] + 4;
+                            if(is_c[head])begin
+                                new_pc <= pc[head] + 2;
+                            end
+                            else begin
+                                new_pc <= pc[head] + 4;
+                            end
                         end
                         else begin //预测不需要跳转
                             clear <= 0;

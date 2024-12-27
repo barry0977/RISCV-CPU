@@ -37,6 +37,7 @@ module Cdecoder(
     input  wire [`RoB_addr-1:0] rob_index,//加入后在RoB中的序号
     output reg  rob_inst_valid,
     output reg  rob_inst_ready,
+    output reg  rob_iscins,
     output reg [5:0] rob_inst_op,
     output reg [2:0] rob_type,
     output reg [31:0] rob_value,
@@ -224,6 +225,7 @@ always @(posedge clk_in)begin
     if(rst_in || rob_clear)begin //分支预测错误时要把此时收到的指令清空
         rob_inst_valid <= 0;
         rob_inst_ready <= 0;
+        rob_iscins <= 0;
         rob_inst_op <= 0;
         rob_type <= 0;
         rob_value <= 0;
@@ -246,10 +248,10 @@ always @(posedge clk_in)begin
         if(if_valid && !stall)begin
             rob_inst_valid <= 1;
             rob_inst_pc <= pc;
-            
             RoB_index <= rob_index;
             last_pc <= pc;
             if(!is_cins)begin //普通指令
+                rob_iscins <= 0;
                 rob_inst_op <= opcode;
                 rob_type <= robtype;
                 inst_val1 <= has_rs1 ? real_val1 : 0;
@@ -335,6 +337,7 @@ always @(posedge clk_in)begin
                 end
             end
             else begin//c扩展指令
+                rob_iscins <= 1;
                 inst_rely1 <= rf_rely1;
                 inst_rely2 <= rf_rely2;
                 if(ctype == 2'b00)begin
