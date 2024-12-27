@@ -213,7 +213,7 @@ InsFetch IF(
 .pc_to_pre(IF_Pre_pc_to_pre)
 );
 
-decoder Decoder(
+Cdecoder Decoder(
   .clk_in(clk_in),
   .rst_in(rst_in),
   .rdy_in(rdy_in),

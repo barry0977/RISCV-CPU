@@ -218,7 +218,7 @@ assign real_val1 = (!rf_has_rely1) ? rf_val1 : (rob_id1_ready ? rob_id1_value : 
 assign real_val2 = (!rf_has_rely2) ? rf_val2 : (rob_id2_ready ? rob_id2_value : 0);
 
 assign dc_valid = if_valid && (last_pc != pc) && !stall;
-assign dc_nextpc = !is_cins ? (optype == `Jal_ins ? pc + imm_J : (optype == `B_ins && isjump) ? pc + imm_B : pc + 4) : ((c_opcode == `C_jal || c_opcode == `C_j) ? pc + imm_J_c : pc + 2);
+assign dc_nextpc = !is_cins ? (optype == `Jal_ins ? pc + imm_J : (optype == `B_ins && isjump) ? pc + imm_B : pc + 4) : ((c_opcode == `C_jal || c_opcode == `C_j) ? pc + imm_J_c : ((c_opcode == `C_beqz || c_opcode == `C_bnez) && isjump) ? pc + imm_B_c : pc + 2);
 
 always @(posedge clk_in)begin
     if(rst_in || rob_clear)begin //分支预测错误时要把此时收到的指令清空
@@ -350,12 +350,11 @@ always @(posedge clk_in)begin
                             rob_rd <= rs2_c1 + 5'd8;
                             rob_addr <= 0;
                             rob_isjump <= 0;
-
                             inst_imm <= 0;
-                            // inst_val1 <= ;
-                            // inst_val2 <= ;
-                            // inst_has_rely1 <= ;
-                            // inst_has_rely2 <= ;
+                            inst_val1 <= real_val1;
+                            inst_val2 <= {22'b0,instr[10:7],instr[12:11],instr[5],instr[6],2'b0};
+                            inst_has_rely1 <= rf_has_rely1 && !rob_id1_ready;
+                            inst_has_rely2 <= 0;
                         end
                         3'b010:begin //c.lw
                             rob_inst_op <= `Lw;
@@ -369,6 +368,10 @@ always @(posedge clk_in)begin
                             rob_addr <= 0;
                             rob_isjump <= 0;
                             inst_imm <= 0;
+                            inst_val1 <= real_val1;
+                            inst_val2 <= {25'b0,instr[5],instr[12:10],instr[6],2'b0};
+                            inst_has_rely1 <= rf_has_rely1 && !rob_id1_ready;
+                            inst_has_rely2 <= 0;
                         end
                         3'b110:begin //c.sw
                             rob_inst_op <= `Sw;
@@ -382,6 +385,10 @@ always @(posedge clk_in)begin
                             rob_addr <= 0;
                             rob_isjump <= 0;
                             inst_imm <= {25'd0,instr[5],instr[12:10],instr[6],2'b00};
+                            inst_val1 <= real_val1;
+                            inst_val2 <= real_val2;
+                            inst_has_rely1 <= rf_has_rely1 && !rob_id1_ready;
+                            inst_has_rely2 <= rf_has_rely2 && !rob_id2_ready;
                         end
                     endcase
                 end
@@ -399,6 +406,10 @@ always @(posedge clk_in)begin
                             rob_addr <= 0;
                             rob_isjump <= 0;
                             inst_imm <= 0;
+                            inst_val1 <= real_val1;
+                            inst_val2 <= {{27{instr[12]}}, instr[6 : 2]};
+                            inst_has_rely1 <= rf_has_rely1 && !rob_id1_ready;
+                            inst_has_rely2 <= 0;
                         end
                         3'b001:begin //c.jal
                             rob_inst_op <= `Jal;
@@ -412,6 +423,10 @@ always @(posedge clk_in)begin
                             rob_addr <= 0;
                             rob_isjump <= 1;
                             inst_imm <= 0;
+                            inst_val1 <= 0;
+                            inst_val2 <= 0;
+                            inst_has_rely1 <= 0;
+                            inst_has_rely2 <= 0;
                         end
                         3'b010:begin //c.li
                             rob_inst_op <= `Addi;
@@ -425,6 +440,10 @@ always @(posedge clk_in)begin
                             rob_addr <= 0;
                             rob_isjump <= 0;
                             inst_imm <= 0;
+                            inst_val1 <= 0;
+                            inst_val2 <= {{27{instr[12]}}, instr[6 : 2]};
+                            inst_has_rely1 <= 0;
+                            inst_has_rely2 <= 0;
                         end
                         3'b011:begin
                             if(instr[11:7] == 2)begin //c.addi16sp
@@ -439,6 +458,10 @@ always @(posedge clk_in)begin
                                 rob_addr <= 0;
                                 rob_isjump <= 0;
                                 inst_imm <= 0;
+                                inst_val1 <= real_val1;
+                                inst_val2 <= {{23{instr[12]}},instr[4:3],instr[5],instr[2],instr[6],4'b0};
+                                inst_has_rely1 <= rf_has_rely1 && !rob_id1_ready;
+                                inst_has_rely2 <= 0;
                             end
                             else begin //c.lui
                                 rob_inst_op <= `Lui;
@@ -452,6 +475,10 @@ always @(posedge clk_in)begin
                                 rob_addr <= 0;
                                 rob_isjump <= 0;
                                 inst_imm <= 0;
+                                inst_val1 <= 0;
+                                inst_val2 <= 0;
+                                inst_has_rely1 <= 0;
+                                inst_has_rely2 <= 0;
                             end
                         end
                         3'b100:begin
@@ -467,6 +494,10 @@ always @(posedge clk_in)begin
                                 rob_addr <= 0;
                                 rob_isjump <= 0;
                                 inst_imm <= 0;
+                                inst_val1 <= real_val1;
+                                inst_val2 <= {26'b0,instr[12], instr[6 : 2]};
+                                inst_has_rely1 <= rf_has_rely1 && !rob_id1_ready;
+                                inst_has_rely2 <= 0;
                             end
                             else if(instr[11:10] == 2'b01)begin //c.srai
                                 rob_inst_op <= `Srai;
@@ -480,6 +511,10 @@ always @(posedge clk_in)begin
                                 rob_addr <= 0;
                                 rob_isjump <= 0;
                                 inst_imm <= 0;
+                                inst_val1 <= real_val1;
+                                inst_val2 <= {26'b0,instr[12], instr[6 : 2]};
+                                inst_has_rely1 <= rf_has_rely1 && !rob_id1_ready;
+                                inst_has_rely2 <= 0;
                             end
                             else if(instr[11:10] == 2'b10)begin //c.andi 
                                 rob_inst_op <= `Andi;
@@ -493,59 +528,43 @@ always @(posedge clk_in)begin
                                 rob_addr <= 0;
                                 rob_isjump <= 0;
                                 inst_imm <= 0;
+                                inst_val1 <= real_val1;
+                                inst_val2 <= {{27{instr[12]}}, instr[6 : 2]};
+                                inst_has_rely1 <= rf_has_rely1 && !rob_id1_ready;
+                                inst_has_rely2 <= 0;
                             end
                             else begin
+                                rob_inst_ready <= 0;
+                                lsb_inst_valid <= 0;
+                                rs_inst_valid <= 1;
+                                rob_value <= 0;
+                                rob_rd <= rs1_c1 + 5'd8;
+                                rob_addr <= 0;
+                                rob_isjump <= 0;
+                                inst_imm <= 0;
+                                inst_val1 <= real_val1;
+                                inst_val2 <= real_val2;
+                                inst_has_rely1 <= rf_has_rely1 && !rob_id1_ready;
+                                inst_has_rely2 <= rf_has_rely2 && !rob_id2_ready;
                                 if(instr[6:5] == 2'b00)begin //c.sub
                                     rob_inst_op <= `Sub;
                                     rob_type <= `toreg_;
                                     inst_op <= `Sub;
-                                    rob_inst_ready <= 0;
-                                    lsb_inst_valid <= 0;
-                                    rs_inst_valid <= 1;
-                                    rob_value <= 0;
-                                    rob_rd <= rs1_c1 + 5'd8;
-                                    rob_addr <= 0;
-                                    rob_isjump <= 0;
-                                    inst_imm <= 0;
                                 end
                                 else if(instr[6:5] == 2'b01)begin //c.xor
                                     rob_inst_op <= `Xor;
                                     rob_type <= `toreg_;
                                     inst_op <= `Xor;
-                                    rob_inst_ready <= 0;
-                                    lsb_inst_valid <= 0;
-                                    rs_inst_valid <= 1;
-                                    rob_value <= 0;
-                                    rob_rd <= rs1_c1 + 5'd8;
-                                    rob_addr <= 0;
-                                    rob_isjump <= 0;
-                                    inst_imm <= 0;
                                 end
                                 else if(instr[6:5] == 2'b10)begin //c.or
                                     rob_inst_op <= `Or;
                                     rob_type <= `toreg_;
                                     inst_op <= `Or;
-                                    rob_inst_ready <= 0;
-                                    lsb_inst_valid <= 0;
-                                    rs_inst_valid <= 1;
-                                    rob_value <= 0;
-                                    rob_rd <= rs1_c1 + 5'd8;
-                                    rob_addr <= 0;
-                                    rob_isjump <= 0;
-                                    inst_imm <= 0;
                                 end
                                 else begin //c.and
                                     rob_inst_op <= `And;
                                     rob_type <= `toreg_;
                                     inst_op <= `And;
-                                    rob_inst_ready <= 0;
-                                    lsb_inst_valid <= 0;
-                                    rs_inst_valid <= 1;
-                                    rob_value <= 0;
-                                    rob_rd <= rs1_c1 + 5'd8;
-                                    rob_addr <= 0;
-                                    rob_isjump <= 0;
-                                    inst_imm <= 0;
                                 end
                             end
                         end
@@ -561,6 +580,10 @@ always @(posedge clk_in)begin
                             rob_addr <= 0;
                             rob_isjump <= 1;
                             inst_imm <= 0;
+                            inst_val1 <= 0;
+                            inst_val2 <= 0;
+                            inst_has_rely1 <= 0;
+                            inst_has_rely2 <= 0;
                         end 
                         3'b110:begin //c.beqz
                             rob_inst_op <= `Beq;
@@ -574,6 +597,10 @@ always @(posedge clk_in)begin
                             rob_addr <= pc + imm_B_c;
                             rob_isjump <= isjump;
                             inst_imm <= 0;
+                            inst_val1 <= real_val1;
+                            inst_val2 <= 0;
+                            inst_has_rely1 <= rf_has_rely1 && !rob_id1_ready;
+                            inst_has_rely2 <= 0;
                         end
                         3'b111:begin //c.bnez
                             rob_inst_op <= `Bne;
@@ -587,6 +614,10 @@ always @(posedge clk_in)begin
                             rob_addr <= pc + imm_B_c;
                             rob_isjump <= isjump;
                             inst_imm <= 0;
+                            inst_val1 <= real_val1;
+                            inst_val2 <= 0;
+                            inst_has_rely1 <= rf_has_rely1 && !rob_id1_ready;
+                            inst_has_rely2 <= 0;
                         end
                     endcase
                 end
@@ -604,6 +635,10 @@ always @(posedge clk_in)begin
                             rob_addr <= 0;
                             rob_isjump <= 0;
                             inst_imm <= 0;
+                            inst_val1 <= real_val1;
+                            inst_val2 <= {26'b0,instr[12], instr[6 : 2]};
+                            inst_has_rely1 <= rf_has_rely1 && !rob_id1_ready;
+                            inst_has_rely2 <= 0;
                         end
                         3'b010:begin //c.lwsp
                             rob_inst_op <= `Lw;
@@ -617,6 +652,10 @@ always @(posedge clk_in)begin
                             rob_addr <= 0;
                             rob_isjump <= 0;
                             inst_imm <= 0;
+                            inst_val1 <= real_val1;
+                            inst_val2 <= {24'b0,instr[3:2],instr[12],instr[6:4],2'b0};
+                            inst_has_rely1 <= rf_has_rely1 && !rob_id1_ready;
+                            inst_has_rely2 <= 0;
                         end
                         3'b100:begin
                             if(instr[12] == 0)begin
@@ -632,6 +671,10 @@ always @(posedge clk_in)begin
                                     rob_addr <= 0;
                                     rob_isjump <= 1;
                                     inst_imm <= 0;
+                                    inst_val1 <= real_val1;
+                                    inst_val2 <= 0;
+                                    inst_has_rely1 <= rf_has_rely1 && !rob_id1_ready;
+                                    inst_has_rely2 <= 0;
                                 end
                                 else begin //c.mv
                                     rob_inst_op <= `Add;
@@ -645,6 +688,10 @@ always @(posedge clk_in)begin
                                     rob_addr <= 0;
                                     rob_isjump <= 0;
                                     inst_imm <= 0;
+                                    inst_val1 <= 0;
+                                    inst_val2 <= real_val2;
+                                    inst_has_rely1 <= 0;
+                                    inst_has_rely2 <= rf_has_rely2 && !rob_id2_ready;
                                 end
                             end
                             else begin
@@ -660,6 +707,10 @@ always @(posedge clk_in)begin
                                     rob_addr <= 0;
                                     rob_isjump <= 1;
                                     inst_imm <= 0;
+                                    inst_val1 <= real_val1;
+                                    inst_val2 <= 0;
+                                    inst_has_rely1 <= rf_has_rely1 && !rob_id1_ready;
+                                    inst_has_rely2 <= 0;
                                 end
                                 else begin //c.add
                                     rob_inst_op <= `Add;
@@ -673,6 +724,10 @@ always @(posedge clk_in)begin
                                     rob_addr <= 0;
                                     rob_isjump <= 0;
                                     inst_imm <= 0;
+                                    inst_val1 <= real_val1;
+                                    inst_val2 <= real_val2;
+                                    inst_has_rely1 <= rf_has_rely1 && !rob_id1_ready;
+                                    inst_has_rely2 <= rf_has_rely2 && !rob_id2_ready;
                                 end
                             end
                         end
@@ -688,6 +743,10 @@ always @(posedge clk_in)begin
                             rob_addr <= 0;
                             rob_isjump <= 0;
                             inst_imm <= {24'b0,instr[8:7],instr[12:9],2'b0};
+                            inst_val1 <= real_val1;
+                            inst_val2 <= real_val2;
+                            inst_has_rely1 <= rf_has_rely1 && !rob_id1_ready;
+                            inst_has_rely2 <= rf_has_rely2 && !rob_id2_ready;
                         end
                     endcase
                 end
