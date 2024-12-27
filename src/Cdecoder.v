@@ -210,8 +210,8 @@ wire [4:0] rs2_c = c_opcode == `C_addi ? 0 :
 assign robtype = (opcode >= `Lui && opcode <= `Jalr) ? `else_ : opcode <= `Bgeu ? `branch_ : opcode <= `Lhu ? `load_ : opcode <= `Sw ? `store_ : opcode <= `And ? `toreg_ : `exit_;
 assign has_rs1 = (opcode != `Lui) && (opcode != `Auipc) && (opcode != `Jal) ? 1 : 0;
 assign has_rs2 = (optype == `B_ins) || (optype == `S_ins) || (optype == `R_ins) ? 1 : 0;
-assign rf_rs1 = !is_cins ? rs1 : rs1_c2;
-assign rf_rs2 = !is_cins ? rs2 : rs2_c2;
+assign rf_rs1 = !is_cins ? rs1 : rs1_c;
+assign rf_rs2 = !is_cins ? rs2 : rs2_c;
 assign rob_id1 = rf_rely1;
 assign rob_id2 = rf_rely2;
 assign real_val1 = (!rf_has_rely1) ? rf_val1 : (rob_id1_ready ? rob_id1_value : 0);
