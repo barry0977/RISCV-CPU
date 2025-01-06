@@ -10,6 +10,8 @@ module MemoryController(
     output reg  [ 7:0]          mem_dout,		// data output bus
     output reg  [31:0]          mem_a,			// address bus (only 17:0 is used)
     output reg                  mem_wr,			// write/read signal (1 for write)
+    
+    input  wire                 io_buffer_full, // 1 if uart buffer is full
 
     //与ICache交互
     input  wire ic_mem_ask,
@@ -51,37 +53,39 @@ always @(posedge clk_in)begin
         case(state)
             0:begin //空闲
                 if(lsb_request)begin
-                    if(!lsb_lors)begin //load
-                        if(lsb_mem_op == `Lb || lsb_mem_op == `Lbu)begin
-                            total_size <= 1;
+                    if(!io_buffer_full)begin
+                        if(!lsb_lors)begin //load
+                            if(lsb_mem_op == `Lb || lsb_mem_op == `Lbu)begin
+                                total_size <= 1;
+                            end
+                            else if(lsb_mem_op == `Lh || lsb_mem_op == `Lhu)begin
+                                total_size <= 2;
+                            end
+                            else begin
+                                total_size <= 4;
+                            end
+                            cur_size <= 0;
+                            state <= 1;
+                            mem_dout <= 0;
+                            mem_a <= lsb_mem_addr;
+                            mem_wr <= 0;
                         end
-                        else if(lsb_mem_op == `Lh || lsb_mem_op == `Lhu)begin
-                            total_size <= 2;
+                        else begin //store
+                            if(lsb_mem_op == `Sb)begin
+                                total_size <= 1;
+                            end
+                            else if(lsb_mem_op == `Sh)begin
+                                total_size <= 2;
+                            end
+                            else begin
+                                total_size <= 4;
+                            end
+                            cur_size <= 0;
+                            state <= 2;
+                            mem_dout <= 0;
+                            mem_a <= 0;
+                            mem_wr <= 0;
                         end
-                        else begin
-                            total_size <= 4;
-                        end
-                        cur_size <= 0;
-                        state <= 1;
-                        mem_dout <= 0;
-                        mem_a <= lsb_mem_addr;
-                        mem_wr <= 0;
-                    end
-                    else begin //store
-                        if(lsb_mem_op == `Sb)begin
-                            total_size <= 1;
-                        end
-                        else if(lsb_mem_op == `Sh)begin
-                            total_size <= 2;
-                        end
-                        else begin
-                            total_size <= 4;
-                        end
-                        cur_size <= 0;
-                        state <= 2;
-                        mem_dout <= 0;
-                        mem_a <= 0;
-                        mem_wr <= 0;
                     end
                 end
                 else if(ic_mem_ask)begin

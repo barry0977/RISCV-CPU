@@ -64,6 +64,8 @@ reg [`LSB_addr-1:0] head,tail;
 wire full,empty;
 wire new_has_rely1,new_has_rely2;
 wire [31:0] new_val1,new_val2;
+wire [31:0] head_addr = (op[head] >= `Lb && op[head] <= `Lhu) ? vj[head] + vk[head] : vj[head] + imm[head];
+wire is_input = head_addr == 196608 || head_addr == 196612; //是否是输入
 
 reg [1:0] state;//0-空闲,1-load,2-store
 
@@ -139,14 +141,18 @@ always @(posedge clk_in)begin
             lsb_valid <= 0;
             if(!empty && is_qj[head] == 0 && is_qk[head] == 0)begin
                 if(op[head] >= `Lb && op[head] <= `Lhu)begin //load可以直接执行
-                    head <= head + 1;
-                    request <= 1;
-                    load_or_store <= 0;
-                    mem_op <= op[head];
-                    mem_addr <= vj[head] + vk[head];
-                    mem_data <= 0;
-                    lsb_robid <= RoBindex[head];
-                    state <= 1;
+                    if(is_input && (rob_head_id != RoBindex[head]))begin//是输入，且rob头部不是该指令，则不能执行
+                    end
+                    else begin
+                        head <= head + 1;
+                        request <= 1;
+                        load_or_store <= 0;
+                        mem_op <= op[head];
+                        mem_addr <= vj[head] + vk[head];
+                        mem_data <= 0;
+                        lsb_robid <= RoBindex[head];
+                        state <= 1;
+                    end
                 end
                 else if(rob_valid && rob_head_id == RoBindex[head])begin //store要等到rob头部也是该指令才执行
                     head <= head + 1;
