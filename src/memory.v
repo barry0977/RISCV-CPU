@@ -82,7 +82,7 @@ always @(posedge clk_in)begin
                             end
                             cur_size <= 1;
                             state <= 2;
-                            mem_dout <= lsb_mem_data[7:0];;
+                            mem_dout <= lsb_mem_data[7:0];
                             mem_a <= lsb_mem_addr;
                             mem_wr <= 1;
                         end

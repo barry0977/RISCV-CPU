@@ -79,11 +79,6 @@ assign new_has_rely2 = inst_has_rely2 && !(alu_valid && (alu_robid == inst_rely2
 assign new_val1 = !inst_has_rely1 ? inst_val1 : (alu_valid && (alu_robid == inst_rely1)) ? alu_val : (lsb_valid && (lsb_robid == inst_rely1)) ? lsb_val : 0;
 assign new_val2 = !inst_has_rely2 ? inst_val2 : (alu_valid && (alu_robid == inst_rely2)) ? alu_val : (lsb_valid && (lsb_robid == inst_rely2)) ? lsb_val : 0;
 
-//debug
-wire [`RoB_addr-1:0] head_robid = RoBindex[head];
-wire [31:0] vj_head = vj[head];
-wire [31:0] vk_head = vk[head];
-
 integer i;
 always @(posedge clk_in)begin
     if(rst_in||lsb_clear)begin
