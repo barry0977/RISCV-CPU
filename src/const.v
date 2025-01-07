@@ -90,13 +90,13 @@
 `define RoB_size 32
 
 //RS
-`define RS_addr 3
-`define RS_size 8
+`define RS_addr 4
+`define RS_size 16
 
 //LSB
-`define LSB_addr 3
-`define LSB_size 8
+`define LSB_addr 4
+`define LSB_size 16
 
 //ICache
-`define Cache_addr 3
-`define Cache_size 8
+`define Cache_addr 5
+`define Cache_size 32

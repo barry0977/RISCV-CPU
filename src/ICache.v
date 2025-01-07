@@ -45,8 +45,6 @@ always @(posedge clk_in)begin
         if(fetch_valid)begin
             if(state == 1)begin //在从内存取指令
                 if(mem_valid)begin
-                    // hit <= 1;
-                    // hit_inst <= mem_inst;
                     state <= 0;
                     mem_ask <= 0;
                     mem_addr <= 0;
@@ -54,10 +52,6 @@ always @(posedge clk_in)begin
                     data[mem_index] <= mem_inst;
                     tag[mem_index] <= mem_addr[17:`Cache_addr+1];
                 end
-                // else begin
-                //     hit <= 0;
-                //     hit_inst <= 0;
-                // end
             end
             else begin 
                 if(exist)begin //命中
@@ -65,8 +59,6 @@ always @(posedge clk_in)begin
                     hit_inst <= data[fetch_pc[`Cache_addr:1]];
                 end
                 else begin
-                    // hit <= 0;
-                    // hit_inst <= 0;
                     state <= 1;
                     mem_ask <= 1;
                     mem_addr <= fetch_pc;

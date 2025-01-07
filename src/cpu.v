@@ -153,6 +153,7 @@ MemoryController MemCtrl(
   .mem_dout(mem_dout),
   .mem_a(mem_a),
   .mem_wr(mem_wr),
+  .io_buffer_full(io_buffer_full),
   .ic_mem_ask(Mem_IC_ic_mem_ask),
   .ic_mem_addr(Mem_IC_ic_mem_addr),
   .ic_mem_valid(Mem_IC_ic_mem_valid),

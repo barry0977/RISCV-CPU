@@ -30,12 +30,12 @@ module InsFetch(
     output wire [31:0] pc_to_pre
 );
 
-assign pc_to_pre = PC;//直接用导线连接，可以在同一个周期内获得预测结果
 
 reg [31:0] PC;
 reg state;//0-idle,1-stall(jalr)
 reg work;//0-idle,1-busy
 
+assign pc_to_pre = PC;//直接用导线连接，可以在同一个周期内获得预测结果
 wire is_cins = hit_inst[1:0] != 2'b11;
 
 wire is_jal = hit_inst[6:0] == `Jal_ins;
