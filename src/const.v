@@ -98,5 +98,5 @@
 `define LSB_size 16
 
 //ICache
-`define Cache_addr 5
-`define Cache_size 32
+`define Cache_addr 8
+`define Cache_size 256
