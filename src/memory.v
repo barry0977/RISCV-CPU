@@ -80,11 +80,11 @@ always @(posedge clk_in)begin
                             else begin
                                 total_size <= 4;
                             end
-                            cur_size <= 0;
+                            cur_size <= 1;
                             state <= 2;
-                            mem_dout <= 0;
-                            mem_a <= 0;
-                            mem_wr <= 0;
+                            mem_dout <= lsb_mem_data[7:0];;
+                            mem_a <= lsb_mem_addr;
+                            mem_wr <= 1;
                         end
                     end
                 end
@@ -150,10 +150,7 @@ always @(posedge clk_in)begin
             end
             2:begin //store
                 mem_wr <= 1;
-                if(cur_size == 0)begin //要在前一个周期先把要写的内容发给Mem,因此是从cur_size=0开始
-                    mem_dout <= lsb_mem_data[7:0];
-                end
-                else if(cur_size == 1)begin
+                if(cur_size == 1)begin
                     mem_dout <= lsb_mem_data[15:8];
                 end
                 else if(cur_size == 2)begin
@@ -174,7 +171,7 @@ always @(posedge clk_in)begin
                 end
                 else begin
                     cur_size <= cur_size + 1;
-                    mem_a <= cur_size == 0 ? lsb_mem_addr : mem_a + 1;//cur_size=0时传入第一个值，地址先不加1
+                    mem_a <= mem_a + 1;//cur_size=0时传入第一个值，地址先不加1
                 end
             end
             3:begin //fetch
