@@ -22,10 +22,15 @@ module ReservationStation(
     input wire RS_clear,
 
     //发送给ALU运算
-    output reg [31:0] alu_rs1,
-    output reg [31:0] alu_rs2,
-    output reg [5:0]  alu_op,
-    output reg [`RoB_addr-1:0] alu_id, 
+    // output reg [31:0] alu_rs1,
+    // output reg [31:0] alu_rs2,
+    // output reg [5:0]  alu_op,
+    // output reg [`RoB_addr-1:0] alu_id, 
+
+    output wire [31:0] alu_rs1,
+    output wire [31:0] alu_rs2,
+    output wire [5:0]  alu_op,
+    output wire [`RoB_addr-1:0] alu_id, 
     //ALU结果更新
     input wire alu_valid,
     input wire [`RoB_addr-1:0] alu_robid,
@@ -74,13 +79,17 @@ assign new_has_rely2 = inst_has_rely2 && !(alu_valid && (alu_robid == inst_rely2
 assign new_val1 = !inst_has_rely1 ? inst_val1 : (alu_valid && (alu_robid == inst_rely1)) ? alu_val : (lsb_valid && (lsb_robid == inst_rely1)) ? lsb_val : 0;
 assign new_val2 = !inst_has_rely2 ? inst_val2 : (alu_valid && (alu_robid == inst_rely2)) ? alu_val : (lsb_valid && (lsb_robid == inst_rely2)) ? lsb_val : 0;
 
+assign alu_rs1 = vj[first_exe];
+assign alu_rs2 = vk[first_exe];
+assign alu_op = op[first_exe];
+assign alu_id = RoBindex[first_exe];
 integer i;
 always @(posedge clk_in)begin
     if(rst_in || RS_clear) begin
-        alu_op <= 0;
-        alu_rs1 <= 0;
-        alu_rs2 <= 0;
-        alu_id <= 0;
+        // alu_op <= 0;
+        // alu_rs1 <= 0;
+        // alu_rs2 <= 0;
+        // alu_id <= 0;
         for(i = 0; i < `RS_size; i = i + 1)begin
             busy[i] <= 0;
             RoBindex[i] <= 0;
@@ -107,16 +116,16 @@ always @(posedge clk_in)begin
         end
         //可以执行，交给ALU
         if(first_exe < `RS_size)begin
-            alu_rs1 <= vj[first_exe];
-            alu_rs2 <= vk[first_exe];
-            alu_op <= op[first_exe];
-            alu_id <= RoBindex[first_exe];
+            // alu_rs1 <= vj[first_exe];
+            // alu_rs2 <= vk[first_exe];
+            // alu_op <= op[first_exe];
+            // alu_id <= RoBindex[first_exe];
             busy[first_exe] <= 0;
         end else begin
-            alu_rs1 <= 0;
-            alu_rs2 <= 0;
-            alu_op <= 0;
-            alu_id <= 0;
+            // alu_rs1 <= 0;
+            // alu_rs2 <= 0;
+            // alu_op <= 0;
+            // alu_id <= 0;
         end
         //更新依赖
         for(i = 0; i < `LSB_size; i = i + 1)begin
